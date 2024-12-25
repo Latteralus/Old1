@@ -1,90 +1,49 @@
-// /js/main.js
+(function() {
+  // Game state: 1 second = 1 minute in-game
+  // Day runs from 7:00 to 22:00 (10 PM).
+  // That’s 15 hours = 900 in-game minutes => 900 real seconds = 15 real minutes per day.
 
-window.gameState = {
-  currentDate: new Date(2024, 0, 1, 7, 0), // Start date: 01/01/2024 07:00
-  timeMultiplier: 12, // 12x real-time
-};
+  const gameState = {
+    currentDate: new Date(2000, 0, 1, 7, 0), // Jan 1, 2000 at 07:00
+    isDayActive: true, 
+    dayIndex: 0 // number of days since start
+  };
 
-window.financesData = {
-  cash: 50000.0, // Starting cash
-  incomeToday: 0.0, // Income for today
-};
+  // Insert top bar & sidebar
+  const root = document.getElementById('root');
+  const topBar = window.renderTopBar();
+  const sidebar = window.renderSidebar();
+  root.appendChild(topBar);
+  root.appendChild(sidebar);
 
-window.orderData = {
-  pending: 0,
-  completed: 0,
-};
+  // Create main-content
+  const mainContent = document.createElement('main');
+  mainContent.className = 'main-content';
+  root.appendChild(mainContent);
 
-window.formatDateTime = function (date) {
-  const options = { month: "2-digit", day: "2-digit", year: "numeric" };
-  const time = date.toTimeString().split(" ")[0].slice(0, 5); // HH:MM format
-  return `[${date.toLocaleDateString("en-US", options)}] [${time}]`;
-};
+  // Start on "Operations" by default, or whichever page:
+  window.showPage('operations');
 
-// Game Loop
-window.startGameLoop = function () {
+  // TICK: Each real second -> advance 1 in-game minute
   setInterval(() => {
-    // Update game time
-    window.gameState.currentDate = new Date(
-      window.gameState.currentDate.getTime() + 1000 * window.gameState.timeMultiplier
-    );
+    if (!gameState.isDayActive) return; // paused after 10 PM
 
-    // Update the displayed time
-    const gameTimeEl = document.getElementById("gameTime");
-    if (gameTimeEl) {
-      gameTimeEl.textContent = window.formatDateTime(window.gameState.currentDate);
+    gameState.currentDate.setMinutes(gameState.currentDate.getMinutes() + 1);
+
+    // Check if we hit 22:00
+    if (gameState.currentDate.getHours() >= 22) {
+      gameState.isDayActive = false;
+      // End-of-day logic
+      window.timeEvents.endOfDay(gameState);
+      return;
     }
 
-    // Update financials
-    const cashBalanceEl = document.getElementById("cashBalance");
-    if (cashBalanceEl) {
-      cashBalanceEl.textContent = `$${window.financesData.cash.toFixed(2)}`;
-    }
+    // Otherwise run minute-based logic
+    window.timeEvents.minuteCheck(gameState);
 
-    const incomeEl = document.getElementById("incomeToday");
-    if (incomeEl) {
-      incomeEl.textContent = `Income (Today): $${window.financesData.incomeToday.toFixed(2)}`;
-    }
+    // Update top bar time
+    window.updateGameTime(gameState.currentDate);
 
-    // Update order counts
-    const pendingOrdersEl = document.getElementById("pendingOrders");
-    if (pendingOrdersEl) {
-      pendingOrdersEl.textContent = `Pending Orders: ${window.orderData.pending}`;
-    }
-
-    const completedOrdersEl = document.getElementById("completedOrders");
-    if (completedOrdersEl) {
-      completedOrdersEl.textContent = `Completed Orders: ${window.orderData.completed}`;
-    }
-
-    // End of Day Check
-    if (window.gameState.currentDate.getHours() === 22 && window.gameState.currentDate.getMinutes() === 0) {
-      window.endOfDaySummary();
-    }
   }, 1000);
-};
 
-// End of Day Summary
-window.endOfDaySummary = function () {
-  clearInterval(window.gameLoop); // Pause the game loop
-
-  // Show end-of-day summary (popup/modal)
-  alert(`End of Day Summary:\nIncome Today: $${window.financesData.incomeToday.toFixed(
-    2
-  )}\nPending Orders: ${window.orderData.pending}\nCompleted Orders: ${window.orderData.completed}`);
-
-  // Reset daily values
-  window.financesData.incomeToday = 0;
-
-  // Reset the time for the next day
-  window.gameState.currentDate.setDate(window.gameState.currentDate.getDate() + 1);
-  window.gameState.currentDate.setHours(7, 0, 0);
-
-  // Resume the game loop
-  window.startGameLoop();
-};
-
-// Initialize the game loop
-document.addEventListener("DOMContentLoaded", () => {
-  window.startGameLoop();
-});
+})();

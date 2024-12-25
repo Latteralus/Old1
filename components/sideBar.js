@@ -10,18 +10,20 @@ window.renderSidebar = function renderSidebar() {
   logoText.textContent = 'PharmaSim';
   logoSection.appendChild(logoText);
 
+  sidebar.appendChild(logoSection);
+
+  // Navigation
   const navLinks = document.createElement('nav');
   navLinks.className = 'nav-links';
 
-  function createNavItem(text, pageName, isActive = false) {
-    const navItem = document.createElement('div');
-    navItem.className = 'nav-item' + (isActive ? ' active' : '');
-    navItem.textContent = text;
-    navItem.onclick = () => window.showPage(pageName);
-    return navItem;
+  function createNavItem(label, pageName, isActive=false) {
+    const item = document.createElement('div');
+    item.className = 'nav-item' + (isActive ? ' active' : '');
+    item.textContent = label;
+    item.onclick = () => window.showPage(pageName);
+    return item;
   }
 
-  // Existing pages:
   navLinks.appendChild(createNavItem('Dashboard', 'dashboard'));
   navLinks.appendChild(createNavItem('Orders', 'orders'));
   navLinks.appendChild(createNavItem('Inventory', 'inventory'));
@@ -32,12 +34,9 @@ window.renderSidebar = function renderSidebar() {
   navLinks.appendChild(createNavItem('Marketing', 'marketing'));
   navLinks.appendChild(createNavItem('Research', 'research'));
   navLinks.appendChild(createNavItem('Statistics', 'statistics'));
-  navLinks.appendChild(createNavItem('Operations', 'operations'));
+  navLinks.appendChild(createNavItem('Operations', 'operations', true));
+  navLinks.appendChild(createNavItem('Equipment', 'equipment', true));
 
-  // NEW LINK for Equipment Page:
-  navLinks.appendChild(createNavItem('Equipment', 'equipment'));
-
-  sidebar.appendChild(logoSection);
   sidebar.appendChild(navLinks);
 
   return sidebar;

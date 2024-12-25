@@ -1,46 +1,63 @@
-// /js/topbar.js
+window.renderTopBar = function renderTopBar() {
+  const topBar = document.createElement('header');
+  topBar.className = 'top-bar';
 
-window.renderTopbar = function () {
-  const topbar = document.createElement("header");
-  topbar.className = "topbar";
+  const topBarContent = document.createElement('div');
+  topBarContent.className = 'top-bar-content';
 
-  // Game Time Display
-  const gameTimeEl = document.createElement("span");
-  gameTimeEl.id = "gameTime";
-  gameTimeEl.textContent = window.formatDateTime(window.gameState.currentDate);
-  topbar.appendChild(gameTimeEl);
+  // Left side
+  const leftSection = document.createElement('div');
+  leftSection.className = 'top-bar-left';
 
-  // Cash Balance Display
-  const cashBalanceEl = document.createElement("span");
-  cashBalanceEl.id = "cashBalance";
-  cashBalanceEl.textContent = `$${window.financesData.cash.toFixed(2)}`;
-  topbar.appendChild(cashBalanceEl);
+  const titleElem = document.createElement('h1');
+  titleElem.className = 'game-title';
+  titleElem.textContent = 'PharmaSim';
 
-  // Income Display
-  const incomeEl = document.createElement("span");
-  incomeEl.id = "incomeToday";
-  incomeEl.textContent = `Income (Today): $${window.financesData.incomeToday.toFixed(
-    2
-  )}`;
-  topbar.appendChild(incomeEl);
+  const summaryContainer = document.createElement('div');
+  summaryContainer.className = 'financial-summary';
 
-  // Pending Orders Display
-  const pendingOrdersEl = document.createElement("span");
-  pendingOrdersEl.id = "pendingOrders";
-  pendingOrdersEl.textContent = `Pending Orders: ${window.orderData.pending}`;
-  topbar.appendChild(pendingOrdersEl);
+  const currentCash = document.createElement('span');
+  currentCash.id = 'currentCash';
+  currentCash.className = 'summary-item';
+  currentCash.textContent = 'Cash: $0.00';
 
-  // Completed Orders Display
-  const completedOrdersEl = document.createElement("span");
-  completedOrdersEl.id = "completedOrders";
-  completedOrdersEl.textContent = `Completed Orders: ${window.orderData.completed}`;
-  topbar.appendChild(completedOrdersEl);
+  const dailyIncome = document.createElement('span');
+  dailyIncome.id = 'dailyIncome';
+  dailyIncome.className = 'summary-item';
+  dailyIncome.textContent = 'Income (Today): $0.00';
 
-  // Append to the body
-  document.body.prepend(topbar);
+  const ordersPending = document.createElement('span');
+  ordersPending.id = 'ordersPending';
+  ordersPending.className = 'summary-item';
+  ordersPending.textContent = 'Pending Orders: 0';
+
+  const ordersCompleted = document.createElement('span');
+  ordersCompleted.id = 'ordersCompleted';
+  ordersCompleted.className = 'summary-item';
+  ordersCompleted.textContent = 'Completed Orders: 0';
+
+  summaryContainer.appendChild(currentCash);
+  summaryContainer.appendChild(dailyIncome);
+  summaryContainer.appendChild(ordersPending);
+  summaryContainer.appendChild(ordersCompleted);
+
+  leftSection.appendChild(titleElem);
+  leftSection.appendChild(summaryContainer);
+
+  // Right side
+  const rightSection = document.createElement('div');
+  rightSection.className = 'top-bar-right';
+
+  const gameTime = document.createElement('span');
+  gameTime.id = 'gameTime';
+  gameTime.className = 'game-time';
+  gameTime.textContent = '[MM/DD/YYYY] [HH:MM]';
+
+  rightSection.appendChild(gameTime);
+
+  topBarContent.appendChild(leftSection);
+  topBarContent.appendChild(rightSection);
+
+  topBar.appendChild(topBarContent);
+  return topBar;
 };
-
-// Ensure this function runs after the DOM is loaded
-document.addEventListener("DOMContentLoaded", () => {
-  window.renderTopbar();
-});
