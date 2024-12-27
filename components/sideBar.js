@@ -17,11 +17,11 @@ window.renderSidebar = function renderSidebar() {
   navLinks.className = 'nav-links';
 
   function createNavItem(label, pageName, isActive=false) {
-    const item = document.createElement('div');
-    item.className = 'nav-item' + (isActive ? ' active' : '');
-    item.textContent = label;
-    item.onclick = () => window.showPage(pageName);
-    return item;
+      const item = document.createElement('div');
+      item.className = 'nav-item' + (isActive ? ' active' : '');
+      item.textContent = label;
+      item.onclick = () => window.showPage(pageName);
+      return item;
   }
 
   navLinks.appendChild(createNavItem('Dashboard', 'dashboard'));
@@ -34,8 +34,8 @@ window.renderSidebar = function renderSidebar() {
   navLinks.appendChild(createNavItem('Marketing', 'marketing'));
   navLinks.appendChild(createNavItem('Research', 'research'));
   navLinks.appendChild(createNavItem('Statistics', 'statistics'));
-  navLinks.appendChild(createNavItem('Operations', 'operations', true));
-  navLinks.appendChild(createNavItem('Equipment', 'equipment', true));
+  navLinks.appendChild(createNavItem('Operations', 'operations'));
+  navLinks.appendChild(createNavItem('Equipment', 'equipment')); // Add the new Equipment page
 
   sidebar.appendChild(navLinks);
 

@@ -1,18 +1,12 @@
 // /js/pages/operationsPage.js
 
-window.renderOperationsPage = function(mainContent) {
+window.renderOperationsPage = function (mainContent) {
   // Clear existing content
   mainContent.innerHTML = '';
 
-  // -------------------------------------------------------------------------
-  // 1) Add a structured layout with well-defined card sections 
-  //    and a consistent style for grouping employees, tasks, and customers.
-  // -------------------------------------------------------------------------
-
   // Create a top-level container
   const container = document.createElement('div');
-  container.className = 'operations-page-container'; 
-  // (Optional) If desired, style this class in style.css
+  container.className = 'operations-page-container';
 
   // Add a header
   const header = document.createElement('h2');
@@ -27,13 +21,9 @@ window.renderOperationsPage = function(mainContent) {
   // Create a top row that will hold summary statistics
   const summaryRow = document.createElement('div');
   summaryRow.style.display = 'flex';
-  summaryRow.style.gap = '1rem'; 
+  summaryRow.style.gap = '1rem';
   summaryRow.style.marginBottom = '1rem';
   container.appendChild(summaryRow);
-
-  // -------------------------------------------------------------------------
-  // 2) Real-time data summaries: e.g., Active tasks, Idle employees.
-  // -------------------------------------------------------------------------
 
   // Card for "Active Task Count"
   const activeTasksCard = document.createElement('div');
@@ -55,11 +45,7 @@ window.renderOperationsPage = function(mainContent) {
   idleEmployeesCard.innerHTML = '<h4>Idle Employees</h4><p id="idleEmployeesCount">0</p>';
   summaryRow.appendChild(idleEmployeesCard);
 
-  // Other summary cards could be added similarly
-
-  // -------------------------------------------------------------------------
   // Main content sections: "Employees & Tasks" and "Customers"
-  // -------------------------------------------------------------------------
   const mainGrid = document.createElement('div');
   mainGrid.style.display = 'grid';
   mainGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(300px, 1fr))';
@@ -70,7 +56,7 @@ window.renderOperationsPage = function(mainContent) {
   const leftCol = document.createElement('div');
   mainGrid.appendChild(leftCol);
 
-  // Right column: Optional customers list
+  // Right column: Customers list
   const rightCol = document.createElement('div');
   mainGrid.appendChild(rightCol);
 
@@ -112,201 +98,180 @@ window.renderOperationsPage = function(mainContent) {
   customersSection.appendChild(customersTitle);
 
   const customersList = document.createElement('div');
+  customersList.id = 'customersList';
   customersSection.appendChild(customersList);
+
+  // Prescriptions container
+  const prescriptionsSection = document.createElement('div');
+  prescriptionsSection.style.border = '1px solid #ccc';
+  prescriptionsSection.style.borderRadius = '4px';
+  prescriptionsSection.style.padding = '1rem';
+  prescriptionsSection.style.backgroundColor = '#fff';
+  rightCol.appendChild(prescriptionsSection);
+
+  const prescriptionsTitle = document.createElement('h3');
+  prescriptionsTitle.textContent = 'Active Prescriptions';
+  prescriptionsSection.appendChild(prescriptionsTitle);
+
+  const prescriptionsList = document.createElement('div');
+  prescriptionsList.id = 'prescriptionsList';
+  prescriptionsSection.appendChild(prescriptionsList);
 
   mainContent.appendChild(container);
 
-  // -------------------------------------------------------------------------
-  // 3) Render logic
-  // -------------------------------------------------------------------------
-
   // Render employees with card style
   function renderEmployees() {
-    employeesList.innerHTML = '';
-    let idleCount = 0;
+      employeesList.innerHTML = '';
+      let idleCount = 0;
 
-    window.employeesData.forEach(emp => {
-      const empCard = document.createElement('div');
-      empCard.style.border = '1px solid #ddd';
-      empCard.style.borderRadius = '4px';
-      empCard.style.padding = '0.5rem';
-      empCard.style.marginBottom = '0.5rem';
-      empCard.style.backgroundColor = '#f9f9f9';
+      window.employeesData.forEach(emp => {
+          const empCard = document.createElement('div');
+          empCard.style.border = '1px solid #ddd';
+          empCard.style.borderRadius = '4px';
+          empCard.style.padding = '0.5rem';
+          empCard.style.marginBottom = '0.5rem';
+          empCard.style.backgroundColor = '#f9f9f9';
 
-      const empHeader = document.createElement('strong');
-      empHeader.textContent = `${emp.firstName} ${emp.lastName} (${emp.role})`;
-      empCard.appendChild(empHeader);
+          const empHeader = document.createElement('strong');
+          empHeader.textContent = `${emp.firstName} ${emp.lastName} (${emp.role})`;
+          empCard.appendChild(empHeader);
 
-      const taskInfo = document.createElement('p');
-      if (emp.currentTaskId) {
-        const t = window.taskManager.tasks.find(tt => tt.id === emp.currentTaskId);
-        if (t) {
-          // Distinguish by task type (Item #4: color or icon)
-          const iconSpan = document.createElement('span');
-          iconSpan.style.display = 'inline-block';
-          iconSpan.style.width = '8px';
-          iconSpan.style.height = '8px';
-          iconSpan.style.marginRight = '4px';
-          // Example: color-coded background
-          if (t.type === 'production') {
-            iconSpan.style.backgroundColor = '#ff9800'; // orange for production
-          } else if (t.type === 'fillPrescription') {
-            iconSpan.style.backgroundColor = '#4caf50'; // green for prescriptions
+          const taskInfo = document.createElement('p');
+          if (emp.currentTaskId) {
+              const task = window.taskManager.tasks.find(t => t.id === emp.currentTaskId);
+              if (task) {
+                  taskInfo.textContent = `Current Task: ${task.type} (ID: ${task.id})`;
+              } else {
+                  taskInfo.textContent = 'Current Task: (Task not found)';
+              }
           } else {
-            iconSpan.style.backgroundColor = '#2196f3'; // default
+              taskInfo.textContent = 'Current Task: None (Idle)';
+              idleCount++;
           }
+          empCard.appendChild(taskInfo);
 
-          taskInfo.appendChild(iconSpan);
+          employeesList.appendChild(empCard);
+      });
 
-          taskInfo.textContent += `Current Task: [${t.type}] ${t.productName}`;
-        } else {
-          taskInfo.textContent = 'Current Task: (Task not found)';
-        }
-      } else {
-        taskInfo.textContent = 'Current Task: None (Idle)';
-        idleCount++;
+      // Update the "Idle Employees" summary
+      const idleEl = document.getElementById('idleEmployeesCount');
+      if (idleEl) {
+          idleEl.textContent = idleCount.toString();
       }
-      empCard.appendChild(taskInfo);
-      employeesList.appendChild(empCard);
-    });
-
-    // Update the "Idle Employees" summary
-    const idleEl = document.getElementById('idleEmployeesCount');
-    if (idleEl) {
-      idleEl.textContent = idleCount.toString();
-    }
   }
 
   // Render all active tasks
   function renderTasks() {
-    // tasksSection was created with a tasksTitle, so we just fill after that
-    // Clear out any existing items
-    const oldEntries = tasksSection.querySelectorAll('.task-entry');
-    oldEntries.forEach(n => n.remove());
+      tasksSection.innerHTML = ''; // Clear existing tasks
 
-    const activeTasks = window.taskManager.tasks.filter(t => t.status !== 'completed');
-    const activeCount = activeTasks.length;
+      const activeTasks = window.taskManager.tasks.filter(t => t.status !== 'completed');
+      const activeCount = activeTasks.length;
 
-    // Update the summary for active tasks
-    const activeTasksEl = document.getElementById('activeTasksCount');
-    if (activeTasksEl) {
-      activeTasksEl.textContent = activeCount.toString();
-    }
-
-    if (activeCount === 0) {
-      // Show a small note
-      const none = document.createElement('p');
-      none.className = 'task-entry';
-      none.textContent = 'No active tasks at the moment.';
-      tasksSection.appendChild(none);
-      return;
-    }
-
-    activeTasks.forEach(task => {
-      const taskDiv = document.createElement('div');
-      taskDiv.className = 'task-entry';
-      taskDiv.style.border = '1px solid #ddd';
-      taskDiv.style.borderRadius = '4px';
-      taskDiv.style.padding = '0.5rem';
-      taskDiv.style.marginBottom = '0.5rem';
-      taskDiv.style.backgroundColor = '#fafafa';
-
-      // Title row with color icon
-      const titleRow = document.createElement('div');
-      titleRow.style.display = 'flex';
-      titleRow.style.alignItems = 'center';
-      titleRow.style.marginBottom = '0.25rem';
-
-      const colorIcon = document.createElement('span');
-      colorIcon.style.display = 'inline-block';
-      colorIcon.style.width = '10px';
-      colorIcon.style.height = '10px';
-      colorIcon.style.borderRadius = '50%';
-      colorIcon.style.marginRight = '8px';
-
-      if (task.type === 'production') {
-        colorIcon.style.backgroundColor = '#ff9800';
-      } else if (task.type === 'fillPrescription') {
-        colorIcon.style.backgroundColor = '#4caf50';
-      } else {
-        colorIcon.style.backgroundColor = '#2196f3';
-      }
-      titleRow.appendChild(colorIcon);
-
-      const titleText = document.createElement('strong');
-      titleText.textContent = `Task #${task.id}`;
-      titleRow.appendChild(titleText);
-
-      taskDiv.appendChild(titleRow);
-
-      // Type and product
-      const detailLine = document.createElement('p');
-      detailLine.textContent = `Type: ${task.type}, Product: ${task.productName || ''}, Status: ${task.status}`;
-      taskDiv.appendChild(detailLine);
-
-      // If assigned
-      if (task.assignedTo) {
-        const assignedEmp = window.employeesData.find(e => e.id === task.assignedTo);
-        if (assignedEmp) {
-          const assignedLine = document.createElement('p');
-          assignedLine.textContent = `Assigned to: ${assignedEmp.firstName} ${assignedEmp.lastName} (${assignedEmp.role})`;
-          taskDiv.appendChild(assignedLine);
-        }
-      } else {
-        const unassignedLine = document.createElement('p');
-        unassignedLine.textContent = 'Assigned to: (none)';
-        taskDiv.appendChild(unassignedLine);
+      // Update the summary for active tasks
+      const activeTasksEl = document.getElementById('activeTasksCount');
+      if (activeTasksEl) {
+          activeTasksEl.textContent = activeCount.toString();
       }
 
-      tasksSection.appendChild(taskDiv);
-    });
+      if (activeCount === 0) {
+          const none = document.createElement('p');
+          none.className = 'task-entry';
+          none.textContent = 'No active tasks at the moment.';
+          tasksSection.appendChild(none);
+          return;
+      }
+
+      activeTasks.forEach(task => {
+          const taskDiv = document.createElement('div');
+          taskDiv.className = 'task-entry';
+          taskDiv.style.border = '1px solid #ddd';
+          taskDiv.style.borderRadius = '4px';
+          taskDiv.style.padding = '0.5rem';
+          taskDiv.style.marginBottom = '0.5rem';
+          taskDiv.style.backgroundColor = '#fafafa';
+
+          const titleRow = document.createElement('div');
+          titleRow.style.display = 'flex';
+          titleRow.style.alignItems = 'center';
+          titleRow.style.marginBottom = '0.25rem';
+
+          const colorIcon = document.createElement('span');
+          colorIcon.style.display = 'inline-block';
+          colorIcon.style.width = '10px';
+          colorIcon.style.height = '10px';
+          colorIcon.style.borderRadius = '50%';
+          colorIcon.style.marginRight = '8px';
+
+          if (task.type === 'production') {
+              colorIcon.style.backgroundColor = '#ff9800';
+          } else if (task.type === 'fillPrescription') {
+              colorIcon.style.backgroundColor = '#4caf50';
+          } else if (task.type === 'customerInteraction') {
+              colorIcon.style.backgroundColor = '#2196f3';
+          } else if (task.type === 'consultation') {
+              colorIcon.style.backgroundColor = '#9C27B0';
+          } else {
+              colorIcon.style.backgroundColor = '#607D8B'; // Default color
+          }
+          titleRow.appendChild(colorIcon);
+
+          const titleText = document.createElement('strong');
+          // Display prescription ID for fillPrescription tasks
+          if (task.type === 'fillPrescription') {
+              titleText.textContent = `Task: ${task.type} (Prescription ID: ${task.prescriptionId})`;
+          } else {
+              titleText.textContent = `Task: ${task.type} (ID: ${task.id})`;
+          }
+          titleRow.appendChild(titleText);
+
+          taskDiv.appendChild(titleRow);
+
+          const detailLine = document.createElement('p');
+          detailLine.textContent = `Product: ${task.productName || ''}, Status: ${task.status}`;
+          taskDiv.appendChild(detailLine);
+
+          // Assigned employee
+          if (task.assignedTo) {
+              const assignedEmp = window.employeesData.find(e => e.id === task.assignedTo);
+              if (assignedEmp) {
+                  const assignedLine = document.createElement('p');
+                  assignedLine.textContent = `Assigned to: ${assignedEmp.firstName} ${assignedEmp.lastName} (${assignedEmp.role})`;
+                  taskDiv.appendChild(assignedLine);
+              }
+          } else {
+              const unassignedLine = document.createElement('p');
+              unassignedLine.textContent = 'Assigned to: (none)';
+              taskDiv.appendChild(unassignedLine);
+          }
+
+          tasksSection.appendChild(taskDiv);
+      });
   }
 
   // Render customers
   function renderCustomers() {
-    customersList.innerHTML = '';
-    if (!window.customers || !window.customers.activeCustomers) {
-      customersList.textContent = 'No customers system found.';
-      return;
-    }
-
-    if (window.customers.activeCustomers.length === 0) {
-      customersList.textContent = 'No customers currently present.';
-      return;
-    }
-
-    window.customers.activeCustomers.forEach(cust => {
-      const custDiv = document.createElement('div');
-      custDiv.style.border = '1px solid #ddd';
-      custDiv.style.borderRadius = '4px';
-      custDiv.style.padding = '0.5rem';
-      custDiv.style.marginBottom = '0.5rem';
-      custDiv.style.backgroundColor = '#f0f0f0';
-
-      custDiv.textContent = `Customer ID: ${cust.id}, Status: ${cust.status}`;
-      customersList.appendChild(custDiv);
-    });
+      window.updateCustomerList(window.customers.activeCustomers);
   }
 
-  // -------------------------------------------------------------------------
-  // Real-time (or frequent) refresh cycle
-  // -------------------------------------------------------------------------
+  // Render prescriptions
+  function renderPrescriptions() {
+      window.updatePrescriptions(window.prescriptions.activePrescriptions);
+  }
+
+  // Call this function to refresh the UI components
   function refreshUI() {
-    renderEmployees();
-    renderTasks();
-    renderCustomers();
+      renderEmployees();
+      renderTasks();
+      renderCustomers();
+      renderPrescriptions();
   }
 
   // Initial render
   refreshUI();
 
-  // If you have a system that updates the UI automatically,
-  // you can tie this in with timeEvents.js or do a setInterval:
-  const refreshInterval = setInterval(() => {
-    // Optional: if page is no longer active, clearInterval
-    refreshUI();
-  }, 2000);
+  // Set interval for periodic refresh
+  const refreshInterval = setInterval(refreshUI, 2000);
 
-  // If your router supports cleanup, do:
+  // Optional: Add cleanup function in case the page is unloaded
   // mainContent.cleanup = () => clearInterval(refreshInterval);
 };
