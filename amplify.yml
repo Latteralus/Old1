@@ -1,0 +1,16 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - echo "No pre-build commands needed"
+    build:
+      commands:
+        - echo "No build step needed for plain HTML site"
+  artifacts:
+    baseDirectory: .  # Output directory is the root, where index.html is located
+    files:
+      - '**/*'  # Include all files in the repository
+  cache:
+    paths:
+      - node_modules/**/*
