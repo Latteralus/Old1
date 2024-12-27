@@ -273,7 +273,7 @@ const productsData = [
       ],
       equipmentNeeded: ['eq002', 'eq003'], // Tablet Press, Powder Blender
       productionTime: 20,
-  }
+  },
   {
     id: 'pd017',
     name: 'Erythromycin Topical Gel',
@@ -474,7 +474,7 @@ const productsData = [
     ],
     equipmentNeeded: ['eq002', 'eq003'], // Tablet Press, Powder Blender
     productionTime: 15,
-}
+},
 {
   id: 'pd033',
   name: 'Albuterol Inhalation Solution',
@@ -693,7 +693,7 @@ const productsData = [
   ],
   equipmentNeeded: ['eq002', 'eq003'], // Tablet Press, Powder Blender
   productionTime: 20,
-}
+},
 {
   id: 'pd050',
   name: 'Clopidogrel Tablet',
@@ -910,7 +910,7 @@ const productsData = [
   ],
   equipmentNeeded: ['eq019'], // Inhaler Filling Machine
   productionTime: 30,
-}
+},
 {
   id: 'pd067',
   name: 'Ketorolac Injection',
@@ -1129,7 +1129,7 @@ const productsData = [
   ],
   equipmentNeeded: ['eq004', 'eq001'], // Capsule Filler, Mortar and Pestle
   productionTime: 20,
-}
+},
 {
   id: 'pd084',
   name: 'Lithium Carbonate Tablet',

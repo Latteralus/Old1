@@ -1,12 +1,14 @@
+// main.js
 (function() {
   // Game state: 1 second = 1 minute in-game
   // Day runs from 7:00 to 22:00 (10 PM).
   // That’s 15 hours = 900 in-game minutes => 900 real seconds = 15 real minutes per day.
 
-  const gameState = {
-    currentDate: new Date(2000, 0, 1, 7, 0), // Jan 1, 2000 at 07:00
-    isDayActive: true, 
-    dayIndex: 0 // number of days since start
+  // Make gameState global by attaching it to window
+  window.gameState = {
+      currentDate: new Date(2000, 0, 1, 7, 0), // Jan 1, 2000 at 07:00
+      isDayActive: true,
+      dayIndex: 0 // number of days since start
   };
 
   // Insert top bar & sidebar
@@ -26,23 +28,24 @@
 
   // TICK: Each real second -> advance 1 in-game minute
   setInterval(() => {
-    if (!gameState.isDayActive) return; // paused after 10 PM
+      if (!window.gameState.isDayActive) return; // paused after 10 PM
 
-    gameState.currentDate.setMinutes(gameState.currentDate.getMinutes() + 1);
+      window.gameState.currentDate.setMinutes(window.gameState.currentDate.getMinutes() + 1);
 
-    // Check if we hit 22:00
-    if (gameState.currentDate.getHours() >= 22) {
-      gameState.isDayActive = false;
-      // End-of-day logic
-      window.timeEvents.endOfDay(gameState);
-      return;
-    }
+      // Check if we hit 22:00
+      if (window.gameState.currentDate.getHours() >= 22) {
+          window.gameState.isDayActive = false;
+          // End-of-day logic
+          window.timeEvents.endOfDay(window.gameState);
+          return;
+      }
 
-    // Otherwise run minute-based logic
-    window.timeEvents.minuteCheck(gameState);
+      // Otherwise run minute-based logic
+      window.timeEvents.minuteCheck(window.gameState);
 
-    // Update top bar time
-    window.updateGameTime(gameState.currentDate);
+      // Update top bar time
+      window.updateUI("time");
+      window.updateUI("finances");
 
   }, 1000);
 

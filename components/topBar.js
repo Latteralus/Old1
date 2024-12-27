@@ -19,25 +19,31 @@ window.renderTopBar = function renderTopBar() {
   const currentCash = document.createElement('span');
   currentCash.id = 'currentCash';
   currentCash.className = 'summary-item';
-  currentCash.textContent = 'Cash: $0.00';
+  currentCash.textContent = `Cash: $${window.financesData.cash.toFixed(2)}`;
 
   const dailyIncome = document.createElement('span');
   dailyIncome.id = 'dailyIncome';
   dailyIncome.className = 'summary-item';
-  dailyIncome.textContent = 'Income (Today): $0.00';
+  dailyIncome.textContent = `Income (Today): $${window.financesData.dailyIncome.toFixed(2)}`;
+
+  const pendingInsurance = document.createElement('span'); // New element for pending insurance
+  pendingInsurance.id = 'pendingInsurance';
+  pendingInsurance.className = 'summary-item';
+  pendingInsurance.textContent = `Pending Insurance: $${window.financesData.pendingInsuranceIncome.toFixed(2)}`;
 
   const ordersPending = document.createElement('span');
   ordersPending.id = 'ordersPending';
   ordersPending.className = 'summary-item';
-  ordersPending.textContent = 'Pending Orders: 0';
+  ordersPending.textContent = `Pending Orders: ${window.financesData.pendingOrders}`;
 
   const ordersCompleted = document.createElement('span');
   ordersCompleted.id = 'ordersCompleted';
   ordersCompleted.className = 'summary-item';
-  ordersCompleted.textContent = 'Completed Orders: 0';
+  ordersCompleted.textContent = `Completed Orders: ${window.financesData.completedOrders}`;
 
   summaryContainer.appendChild(currentCash);
   summaryContainer.appendChild(dailyIncome);
+  summaryContainer.appendChild(pendingInsurance); // Add pending insurance to summary
   summaryContainer.appendChild(ordersPending);
   summaryContainer.appendChild(ordersCompleted);
 
@@ -51,7 +57,7 @@ window.renderTopBar = function renderTopBar() {
   const gameTime = document.createElement('span');
   gameTime.id = 'gameTime';
   gameTime.className = 'game-time';
-  gameTime.textContent = '[MM/DD/YYYY] [HH:MM]';
+  gameTime.textContent = window.formatDateTime(window.gameState.currentDate);
 
   rightSection.appendChild(gameTime);
 
@@ -59,5 +65,10 @@ window.renderTopBar = function renderTopBar() {
   topBarContent.appendChild(rightSection);
 
   topBar.appendChild(topBarContent);
+
+  // Update the financial summary and game time initially and whenever the data changes
+  window.updateFinancialSummary(window.financesData);
+  window.updateGameTime(window.gameState.currentDate);
+
   return topBar;
 };
