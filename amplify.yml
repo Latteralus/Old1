@@ -3,14 +3,13 @@ frontend:
   phases:
     preBuild:
       commands:
-        - echo "No pre-build commands needed"
+        - echo "No pre-build commands needed for static site"
     build:
       commands:
-        - echo "No build step needed for plain HTML site"
+        - echo "Ensuring static site files are ready"
   artifacts:
-    baseDirectory: .  # Output directory is the root, where index.html is located
+    baseDirectory: .  # Output directory is the repository root
     files:
-      - '**/*'  # Include all files in the repository
+      - '**/*'  # Include all files and subdirectories
   cache:
-    paths:
-      - node_modules/**/*
+    paths: []

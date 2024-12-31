@@ -17,10 +17,10 @@ window.customers = {
   generateCustomer: function(hour) {
       // Determine customer type
       const customerType = this.getRandomCustomerType();
-  
+
       // Assign insurance
       const insurance = this.getRandomInsurance();
-  
+
       const newCustomer = {
           id: `cust-${Date.now()}`,
           type: customerType,
@@ -34,23 +34,23 @@ window.customers = {
           lastName: window.getRandomLastName()
           // ... other fields as needed
       };
-  
+
       this.activeCustomers.push(newCustomer);
-  
+
       // Generate and assign a prescription
       const prescriptionId = window.prescriptions.generatePrescription(newCustomer.id);
       this.assignPrescription(newCustomer.id, prescriptionId);
-  
+
       // Start the customer's patience timer
       this.startCustomerTimer(newCustomer.id);
-  
+
       // Trigger UI update to display the new customer
       window.updateUI('customers');
       window.updateUI('operations');
   },
 
   // Function to spawn customers based on the hour and brand/reputation
-  spawnCustomersForHour(hour) {
+  spawnCustomersForHour: function(hour) {
       const count = window.brandReputation.calcCustomers(hour);
       for (let i = 0; i < count; i++) {
           this.generateCustomer(hour);
@@ -58,7 +58,7 @@ window.customers = {
   },
 
   // Function to assign a prescription to a customer
-  assignPrescription(customerId, prescriptionId) {
+  assignPrescription: function(customerId, prescriptionId) {
       const customer = this.activeCustomers.find(c => c.id === customerId);
       if (customer) {
           customer.prescriptionId = prescriptionId;
@@ -86,17 +86,17 @@ window.customers = {
       const customerIndex = this.activeCustomers.findIndex(c => c.id === customerId);
       if (customerIndex > -1) {
           const customer = this.activeCustomers[customerIndex];
-  
+
           // Clear the customer's timer
           clearInterval(customer.timer);
-  
+
           // Remove the customer from the active list
           this.activeCustomers.splice(customerIndex, 1);
-  
+
           // Trigger UI update
           window.updateUI('customers');
           window.updateUI('operations');
-  
+
           console.log(`Customer ${customerId} left.`);
       }
   },

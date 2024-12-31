@@ -1,43 +1,50 @@
+// /components/sidebar.js
+
 window.renderSidebar = function renderSidebar() {
   const sidebar = document.createElement('aside');
   sidebar.className = 'sidebar';
-
-  const logoSection = document.createElement('div');
-  logoSection.className = 'logo-section';
-
-  const logoText = document.createElement('span');
-  logoText.className = 'logo-text';
-  logoText.textContent = 'PharmaSim';
-  logoSection.appendChild(logoText);
-
-  sidebar.appendChild(logoSection);
 
   // Navigation
   const navLinks = document.createElement('nav');
   navLinks.className = 'nav-links';
 
-  function createNavItem(label, pageName, isActive=false) {
+  function createNavItem(label, pageName) {
       const item = document.createElement('div');
-      item.className = 'nav-item' + (isActive ? ' active' : '');
+      item.className = 'nav-item';
       item.textContent = label;
       item.onclick = () => window.showPage(pageName);
+      item.id = `${pageName}-nav-item`; // Add an id to each item for easy access later
       return item;
   }
 
-  navLinks.appendChild(createNavItem('Dashboard', 'dashboard'));
-  navLinks.appendChild(createNavItem('Orders', 'orders'));
-  navLinks.appendChild(createNavItem('Inventory', 'inventory'));
-  navLinks.appendChild(createNavItem('Finances', 'finances'));
-  navLinks.appendChild(createNavItem('Employees', 'employees'));
-  navLinks.appendChild(createNavItem('Marketplace', 'marketplace'));
-  navLinks.appendChild(createNavItem('Customers', 'customers'));
-  navLinks.appendChild(createNavItem('Marketing', 'marketing'));
-  navLinks.appendChild(createNavItem('Research', 'research'));
-  navLinks.appendChild(createNavItem('Statistics', 'statistics'));
+  // Updated order and grouping
   navLinks.appendChild(createNavItem('Operations', 'operations'));
-  navLinks.appendChild(createNavItem('Equipment', 'equipment')); // Add the new Equipment page
+  navLinks.appendChild(createNavItem('Inventory', 'inventory'));
+  navLinks.appendChild(createNavItem('Marketplace', 'marketplace'));
+  navLinks.appendChild(createNavItem('Employees', 'employees'));
+  navLinks.appendChild(createNavItem('Finances', 'finances'));
+  navLinks.appendChild(createNavItem('Customers', 'customers'));
+  navLinks.appendChild(createNavItem('Orders', 'orders'));
+  navLinks.appendChild(createNavItem('Equipment', 'equipment'));
+  navLinks.appendChild(createNavItem('Research', 'research'));
+  navLinks.appendChild(createNavItem('Marketing', 'marketing'));
+  navLinks.appendChild(createNavItem('Statistics', 'statistics'));
+  navLinks.appendChild(createNavItem('Dashboard', 'dashboard'));
 
   sidebar.appendChild(navLinks);
 
   return sidebar;
+};
+
+// New function to update the active nav item
+window.updateActiveNavItem = function(pageName) {
+  const navItems = document.querySelectorAll('.nav-item');
+  navItems.forEach(item => {
+      item.classList.remove('active');
+  });
+
+  const activeNavItem = document.getElementById(`${pageName}-nav-item`);
+  if (activeNavItem) {
+      activeNavItem.classList.add('active');
+  }
 };

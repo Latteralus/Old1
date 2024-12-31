@@ -5,7 +5,7 @@ window.equipmentData = [
         id: 'eq001',
         name: 'Mortar and Pestle',
         cost: 500,
-        owned: 0,
+        owned: 1,
         durability: 100,             // starts at 100, degrade over time
         capacity: 1,                // can only handle 1 task at a time
         autoPurchaseThreshold: 0,    // if owned < this, auto-buy
@@ -21,7 +21,7 @@ window.equipmentData = [
         id: 'eq002',
         name: 'Tablet Press',
         cost: 7500,
-        owned: 0,
+        owned: 1,
         durability: 100,
         capacity: 1,                // Number of workers that can use it at once
         autoPurchaseThreshold: 0,
@@ -37,7 +37,7 @@ window.equipmentData = [
         id: 'eq003',
         name: 'Powder Blender',
         cost: 4000,
-        owned: 0,
+        owned: 1,
         durability: 100,
         capacity: 1,                // Number of workers that can use it at once
         autoPurchaseThreshold: 0,
