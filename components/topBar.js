@@ -1,3 +1,5 @@
+// /components/topBar.js
+
 window.renderTopBar = function renderTopBar() {
   const topBar = document.createElement('header');
   topBar.className = 'top-bar';
@@ -19,31 +21,36 @@ window.renderTopBar = function renderTopBar() {
   const currentCash = document.createElement('span');
   currentCash.id = 'currentCash';
   currentCash.className = 'summary-item';
+  // Use financesData to get the value
   currentCash.textContent = `Cash: $${window.financesData.cash.toFixed(2)}`;
 
   const dailyIncome = document.createElement('span');
   dailyIncome.id = 'dailyIncome';
   dailyIncome.className = 'summary-item';
+  // Use financesData to get the value
   dailyIncome.textContent = `Income (Today): $${window.financesData.dailyIncome.toFixed(2)}`;
 
-  const pendingInsurance = document.createElement('span'); // New element for pending insurance
+  const pendingInsurance = document.createElement('span');
   pendingInsurance.id = 'pendingInsurance';
   pendingInsurance.className = 'summary-item';
+  // Use financesData to get the value
   pendingInsurance.textContent = `Pending Insurance: $${window.financesData.pendingInsuranceIncome.toFixed(2)}`;
 
   const ordersPending = document.createElement('span');
   ordersPending.id = 'ordersPending';
   ordersPending.className = 'summary-item';
+  // Use financesData to get the value
   ordersPending.textContent = `Pending Orders: ${window.financesData.pendingOrders}`;
 
   const ordersCompleted = document.createElement('span');
   ordersCompleted.id = 'ordersCompleted';
   ordersCompleted.className = 'summary-item';
+  // Use financesData to get the value
   ordersCompleted.textContent = `Completed Orders: ${window.financesData.completedOrders}`;
 
   summaryContainer.appendChild(currentCash);
   summaryContainer.appendChild(dailyIncome);
-  summaryContainer.appendChild(pendingInsurance); // Add pending insurance to summary
+  summaryContainer.appendChild(pendingInsurance);
   summaryContainer.appendChild(ordersPending);
   summaryContainer.appendChild(ordersCompleted);
 
@@ -57,7 +64,8 @@ window.renderTopBar = function renderTopBar() {
   const gameTime = document.createElement('span');
   gameTime.id = 'gameTime';
   gameTime.className = 'game-time';
-  gameTime.textContent = window.formatDateTime(window.gameState.currentDate);
+  // Use the correct function name: window.ui.formatDateTime()
+  gameTime.textContent = window.ui.formatDateTime(window.gameState.currentDate);
 
   rightSection.appendChild(gameTime);
 
@@ -65,10 +73,6 @@ window.renderTopBar = function renderTopBar() {
   topBarContent.appendChild(rightSection);
 
   topBar.appendChild(topBarContent);
-
-  // Update the financial summary and game time initially and whenever the data changes
-  window.updateFinancialSummary(window.financesData);
-  window.updateGameTime(window.gameState.currentDate);
 
   return topBar;
 };

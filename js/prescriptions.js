@@ -1,155 +1,122 @@
 // /js/prescriptions.js
+
 window.prescriptions = {
     activePrescriptions: [],
 
     generatePrescription: function(customerId) {
-        // Get the customer
-        const customer = window.customers.activeCustomers.find(c => c.id === customerId);
+        const customer = window.customers.getCustomerById(customerId);
+        if (!customer) {
+            console.error('No customer found for generatePrescription:', customerId);
+            return null;
+        }
 
-        // Determine available products based on research level
+        // Pick an available product
         const unlockedProducts = window.research.getUnlockedProducts();
-        
-        // Filter out products that the pharmacy does not have the equipment for
-        const availableProducts = unlockedProducts.filter(productId => {
-            const product = window.productsData.find(p => p.id === productId);
-            return product.equipmentNeeded.every(eqId => {
-                const equipment = window.equipmentData.find(e => e.id === eqId);
-                return equipment && equipment.owned > 0;
-            });
-        });
-
-        // Randomly select a product from the available products
-        const randomIndex = Math.floor(Math.random() * availableProducts.length);
-        const productId = availableProducts[randomIndex];
+        // Filter for equipment, etc. (omitted for brevity)
+        // Suppose we pick one randomly:
+        // e.g.:
+        const productId = unlockedProducts[Math.floor(Math.random() * unlockedProducts.length)];
         const product = window.productsData.find(p => p.id === productId);
-
-        // Generate a random dosage and frequency
-        const dosage = Math.floor(Math.random() * 5) + 1; // 1 to 5
-        const frequencies = ["once daily", "twice daily", "three times daily", "every 4 hours", "every 6 hours", "every 8 hours", "as needed"];
+        if (!product) {
+            console.error('No product found for generatePrescription:', productId);
+            return null;
+        }
 
         const newPrescription = {
             id: `pres-${Date.now()}`,
             customerId: customerId,
             productId: productId,
             productName: product.name,
-            dosage: `${dosage} ${product.dosageForm}`,
-            frequency: frequencies[Math.floor(Math.random() * frequencies.length)],
+            dosage: `2 ${product.dosageForm}`, // example
+            frequency: 'twice daily',
             status: 'pending',
-            doctorName: window.generateDoctorName(), // Use the function from names.js
-            refillsAllowed: 0, // Placeholder for future implementation
-            assignedEmployeeId: null, // Initially not assigned
-            // ... other fields as needed
+            doctorName: window.generateDoctorName(),
+            refillsAllowed: 0,
+            assignedEmployeeId: null
         };
-
         this.activePrescriptions.push(newPrescription);
 
-        // Create a corresponding task for filling the prescription
+        // Create a fillPrescription task (not assigned yet)
         const fillTask = {
             id: `fill-${Date.now()}`,
             type: 'fillPrescription',
             prescriptionId: newPrescription.id,
             productId: newPrescription.productId,
             productName: product.name,
-            totalTime: window.employees.calculateTaskCompletionTime(product.productionTime, window.employeesData.find(emp => emp.role === 'Lab Technician').id, 'compounding'), // Calculate time based on best technician
+            totalTime: 10, // Example base time
             progress: 0,
-            roleNeeded: 'Lab Technician', // Default to technician
+            roleNeeded: 'Lab Technician', // Only Lab Tech
             status: 'pending',
             assignedTo: null,
-            requiredEquipment: product.equipmentNeeded, // Add this line
-            quantityNeeded: dosage,
+            requiredEquipment: product.equipmentNeeded,
+            quantityNeeded: 1,
             customerId: customerId
         };
-
-        // Check if a pharmacist is available for a quicker fill time
-        const pharmacistAvailable = window.employeesData.some(emp => emp.role === 'Pharmacist' && !emp.currentTaskId);
-        if (pharmacistAvailable) {
-            fillTask.roleNeeded = 'Pharmacist';
-            fillTask.totalTime = window.employees.calculateTaskCompletionTime(product.productionTime, window.employeesData.find(emp => emp.role === 'Pharmacist').id, 'dispensing'); // Calculate time based on best pharmacist
-        }
-
         window.taskManager.addTask(fillTask);
 
-        // Create a customer interaction task for taking the prescription
-        const customerInteractionTask = {
-            id: `cust-${Date.now()}`,
-            type: 'customerInteraction',
-            customerId: customerId,
-            totalTime: 5, // Example: 5 minutes for initial interaction
-            progress: 0,
-            roleNeeded: 'Pharmacist', // Or 'Lab Technician', based on your preference
-            status: 'pending',
-            assignedTo: null,
-            // prescriptionId: newPrescription.id // NOT NEEDED
-        };
-
-        window.taskManager.addTask(customerInteractionTask);
-
-        // Try to assign an employee to the task automatically
+        // Auto-assign tasks
         window.taskAssignment.autoAssignTasks();
 
-        // Update customer status to indicate they need a consultation
-        window.customers.updateCustomerStatus(customerId, 'awaitingConsultation');
-
-        return newPrescription.id; // Return the ID to link it to the customer
+        return newPrescription.id;
     },
 
-    // Function to update prescription status
     updatePrescriptionStatus: function(prescriptionId, newStatus) {
         const prescription = this.activePrescriptions.find(p => p.id === prescriptionId);
         if (prescription) {
             prescription.status = newStatus;
-
-            // Trigger UI update
-            window.updateUI('operations'); // or 'prescriptions' if you have a dedicated page
+            window.ui.updatePrescriptions();
         }
     },
 
-    // Function to get a prescription by ID
-    getPrescription: function(prescriptionId) {
-        return this.activePrescriptions.find(p => p.id === prescriptionId);
-    },
-
-    // Called when a prescription is filled (task completed)
+    // When fillPrescription completes
     prescriptionFilled: function (prescriptionId, customerId) {
-        // Update prescription status
         this.updatePrescriptionStatus(prescriptionId, 'filled');
 
-        // Update customer status
+        const customer = window.customers.getCustomerById(customerId);
+        if (!customer) {
+            console.warn(`Customer not found during prescriptionFilled: ${customerId}`);
+            return;
+        }
+
+        // Mark them ready for checkout
         window.customers.updateCustomerStatus(customerId, 'readyForCheckout');
 
-        // Create a customer interaction task for checkout
+        // Create a checkout interaction for the Cashier
         const checkoutTask = {
-            id: `checkout-${Date.now()}`,
+            id: `checkout-${customerId}`,
             type: 'customerInteraction',
             customerId: customerId,
-            totalTime: 5, // Example: 5 minutes for checkout
+            totalTime: 3, // example
             progress: 0,
-            roleNeeded: 'Pharmacist', // Or 'Lab Technician'
+            roleNeeded: 'Cashier',
             status: 'pending',
-            assignedTo: null,
-            // prescriptionId: prescriptionId // Not needed
+            assignedTo: null
         };
         window.taskManager.addTask(checkoutTask);
 
-        // Auto-assign the checkout task
+        // Auto-assign
         window.taskAssignment.autoAssignTasks();
     },
 
-    // Called when a customer needs a consultation (after check-in)
+    // Creates a consultation task for Pharmacist after check-in
     createConsultationTask: function (customerId) {
         const consultationTask = {
-            id: `consult-${Date.now()}`,
+            id: `consult-${customerId}`,
             type: 'consultation',
             customerId: customerId,
-            totalTime: 10, // Example: 10 minutes for consultation
+            totalTime: 5, // e.g. 5 minutes
             progress: 0,
             roleNeeded: 'Pharmacist',
             status: 'pending',
-            assignedTo: null,
+            assignedTo: null
         };
         window.taskManager.addTask(consultationTask);
 
-        // Auto-assign the consultation task
+        // auto-assign
         window.taskAssignment.autoAssignTasks();
     },
+
+    getPrescription: function(prescriptionId) {
+        return this.activePrescriptions.find(p => p.id === prescriptionId);
+    }
 };

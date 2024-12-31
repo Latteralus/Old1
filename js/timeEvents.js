@@ -1,95 +1,129 @@
 // /js/timeEvents.js
-
 window.timeEvents = {
-  endOfDay: function(gameState) {
-      // Run any logic that happens at end of day
-      // e.g. increment day counter, reset daily stats
-      gameState.dayIndex++;
 
-      // Run start of day logic
-      this.startOfDay(gameState);
-  },
+    // ---------------------------------------------------------
+    // Called at 22:00 in main.js, or whenever a day ends
+    // ---------------------------------------------------------
+    endOfDay: function(gameState) {
+        console.log("[timeEvents] endOfDay triggered. Current dayIndex:", gameState.dayIndex);
 
-  startOfDay: function(gameState) {
-      // Begin the day
-      gameState.isDayActive = true;
+        // End-of-day finance operations
+        window.finances.applyDailyCosts();
 
-      // Add any start-of-day logic (e.g. restock, etc)
-  },
+        // Show the daily summary, then wait for the user to start next day
+        window.showDailySummaryModal(() => {
+            console.log("[timeEvents] Daily summary closed. Skipping to next day...");
+            this.skipToNextDay(gameState);
+        });
+    },
 
-  minuteCheck: function(gameState) {
-      // Run any logic that should be checked each in-game minute
-      window.taskManager.updateTasks(1);
-      window.taskAssignment.autoAssignTasks();
+    // ---------------------------------------------------------
+    // Starts the next day at 07:00
+    // ---------------------------------------------------------
+    skipToNextDay: function(gameState) {
+        console.log("[timeEvents] skipToNextDay() called. DayIndex was:", gameState.dayIndex);
 
-      if (gameState.currentDate.getMinutes() === 0) {
-          const hour = gameState.currentDate.getHours();
-          this.hourlyCheck(gameState, hour);
-      }
-  },
+        // Move to next day
+        const day = gameState.currentDate.getDate();
+        gameState.currentDate.setDate(day + 1);
+        gameState.currentDate.setHours(7, 0, 0, 0);
+        gameState.dayIndex++;
+        gameState.isDayActive = true;
 
-  hourlyCheck: function(gameState, hour) {
-      this.spawnCustomersForHour(hour);  // existing logic
-      this.autoOrderCheck();              // new function to check all materials
-  },
+        // Reset some daily counters
+        window.financesData.dailyIncome = 0;
+        window.financesData.pendingOrders = 0;
+        window.financesData.completedOrders = 0;
 
-  endOfDay: function(gameState) {
-      window.finances.applyDailyCosts();
-      window.showDailySummaryModal(() => {
-          this.skipToNextDay(gameState);
-      });
-  },
+        console.log("[timeEvents] Next day started. DayIndex is now:", gameState.dayIndex, 
+                    "Current time:", gameState.currentDate.toString());
 
-  skipToNextDay: function(gameState) {
-      const day = gameState.currentDate.getDate();
-      gameState.currentDate.setDate(day + 1);
-      gameState.currentDate.setHours(7, 0, 0, 0);
-      gameState.dayIndex++;
-      gameState.isDayActive = true;
+        // Update the UI to reflect the new day
+        window.updateUI("finances");
+        window.updateUI("time");
+    },
 
-      window.financesData.dailyIncome = 0;
-      window.financesData.pendingOrders = 0;
-      window.financesData.completedOrders = 0;
+    // ---------------------------------------------------------
+    // Called each in-game minute from main.js
+    // ---------------------------------------------------------
+    minuteCheck: function(gameState) {
+        console.log("[timeEvents] minuteCheck called at:", 
+                    gameState.currentDate.getHours() + ":" + gameState.currentDate.getMinutes(),
+                    "Day active?", gameState.isDayActive);
 
-      window.updateUI("finances"); // Update the UI to reflect changes
-      window.updateUI("time"); // Update the UI to reflect changes
-  },
+        // Update tasks
+        console.log("[timeEvents] Updating tasks (taskManager.updateTasks)...");
+        window.taskManager.updateTasks(1);
 
-  // Example spawn logic (unchanged or truncated)
-  spawnCustomersForHour: function(hour) {
-      let count = window.brandReputation.calcCustomers(hour);
-      count += Math.floor(Math.random() * 2);
-      for (let i = 0; i < count; i++) {
-          window.customers.generateCustomer();
-      }
-  },
+        // Auto-assign tasks
+        console.log("[timeEvents] Auto-assigning tasks...");
+        window.taskAssignment.autoAssignTasks();
 
-  // The new auto-order function
-  autoOrderCheck: function() {
-      window.materialsData.forEach(mat => {
-          // If auto-order is set
-          if (typeof mat.autoOrderThreshold === 'number' && typeof mat.autoOrderAmount === 'number') {
-              if (mat.inventory < mat.autoOrderThreshold) {
-                  // Attempt to order mat.autoOrderAmount
-                  const cost = mat.cost * mat.autoOrderAmount;
-                  if (window.financesData.cash >= cost) {
-                      // Subtract cost
-                      window.financesData.cash -= cost;
-                      // Add to inventory
-                      mat.inventory += mat.autoOrderAmount;
-                      // Optionally add a log or alert
-                      console.log(
-                          `[Auto-Order] Purchased ${mat.autoOrderAmount} of "${mat.name}" for $${cost.toFixed(2)}. Cash left: $${window.financesData.cash.toFixed(2)}.`
-                      );
-                      // Optionally update dailyIncome or track these costs
-                      window.financesData.dailyIncome -= cost;
+        // If it's exactly XX:00, run hourly check
+        if (gameState.currentDate.getMinutes() === 0) {
+            const hour = gameState.currentDate.getHours();
+            this.hourlyCheck(gameState, hour);
+        }
+    },
 
-                      window.updateUI("finances"); // Update the UI to reflect changes
-                  } else {
-                      console.log(`[Auto-Order] Not enough cash to auto-order "${mat.name}".`);
-                  }
-              }
-          }
-      });
-  }
+    // ---------------------------------------------------------
+    // Called each in-game hour (from minuteCheck if minutes=0)
+    // ---------------------------------------------------------
+    hourlyCheck: function(gameState, hour) {
+        console.log("[timeEvents] hourlyCheck at hour:", hour);
+        this.spawnCustomersForHour(hour);
+        this.autoOrderCheck();
+    },
+
+    // ---------------------------------------------------------
+    // Basic spawn logic for new customers each hour
+    // ---------------------------------------------------------
+    spawnCustomersForHour: function(hour) {
+        console.log("[timeEvents] Spawning customers for hour:", hour);
+        let count = window.brandReputation.calcCustomers(hour);
+        // Add a small random variation
+        count += Math.floor(Math.random() * 2);
+
+        for (let i = 0; i < count; i++) {
+            // If you want to pass the hour to generateCustomer, do so:
+            // window.customers.generateCustomer(hour);
+            // or just call it with no arg
+            window.customers.generateCustomer();
+        }
+    },
+
+    // ---------------------------------------------------------
+    // Start the day
+    // ---------------------------------------------------------
+    startOfDay: function(gameState) {
+        console.log("[timeEvents] startOfDay called. Setting isDayActive = true.");
+        gameState.isDayActive = true;
+        // Add any start-of-day logic (restocking, daily reminders, etc)
+    },
+
+    // ---------------------------------------------------------
+    // Check if we need to auto-order materials
+    // ---------------------------------------------------------
+    autoOrderCheck: function() {
+        console.log("[timeEvents] autoOrderCheck called.");
+        window.materialsData.forEach(mat => {
+            // If auto-order is configured
+            if (typeof mat.autoOrderThreshold === 'number' && typeof mat.autoOrderAmount === 'number') {
+                if (mat.inventory < mat.autoOrderThreshold) {
+                    const cost = window.calculateMaterialCost(mat.id, mat.autoOrderAmount);
+                    if (window.financesData.cash >= cost) {
+                        // Subtract cost & add to inventory
+                        window.financesData.cash -= cost;
+                        mat.inventory += mat.autoOrderAmount;
+                        console.log(`[Auto-Order] Purchased ${mat.autoOrderAmount} of "${mat.name}" for $${cost.toFixed(2)}. Remaining cash: $${window.financesData.cash.toFixed(2)}`);
+                        // Deduct from dailyIncome
+                        window.financesData.dailyIncome -= cost;
+                        window.updateUI("finances");
+                    } else {
+                        console.warn(`[Auto-Order] Not enough cash to auto-order "${mat.name}".`);
+                    }
+                }
+            }
+        });
+    }
 };
