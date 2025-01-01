@@ -2,12 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PharmaSim</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div id="root">
-        <div class="top-bar"></div> <div class="sidebar"></div> <div class="main-content"></div>
+        <div class="top-bar"></div>
+        <div class="sidebar"></div>
+        <div class="main-content"></div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -52,5 +55,16 @@
     <script src="modals/modal.js" defer></script>
 
     <script src="js/main.js" defer></script>
+
+    <!-- Script to make 'operationsPage' the default page -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.showPage) {
+                window.showPage('operations'); // Show operationsPage as the default
+            } else {
+                console.error('window.showPage function not found.');
+            }
+        });
+    </script>
 </body>
 </html>
