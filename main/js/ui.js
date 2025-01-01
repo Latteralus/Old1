@@ -175,20 +175,12 @@ window.ui = {
         }
     },
 
-    // --- Updated to prevent forced navigation ---
-    updateOperations: function() {
-        // Only re-render if we're already on the Operations page
-        if (window.currentPage === 'operations') {
-            window.renderOperationsPage(document.querySelector('.main-content'));
-        }
-    },
-
     // --- Helper functions for formatting ---
     formatDate: function(dateObj) {
         const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
         const dd = String(dateObj.getDate()).padStart(2, '0');
-        const yyyy = dateObj.getFullYear();
-        return `${mm}/${dd}/${yyyy}`;
+        const excisedYear = dateObj.getFullYear();
+        return `${mm}/${dd}/${excisedYear}`;
     },
 
     formatTime: function(dateObj) {

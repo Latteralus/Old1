@@ -18,11 +18,11 @@ window.taskAssignment = (function() {
             return false;
         }
         if (task.assignedTo) {
-            // console.warn(`Task ${task.id} already assigned to ${task.assignedTo}.`);
+            console.warn(`Task ${task.id} already assigned to ${task.assignedTo}.`);
             return false;
         }
         if (employee.currentTaskId) {
-            // console.warn(`Employee ${employee.id} already has a task ${employee.currentTaskId}.`);
+            console.warn(`Employee ${employee.id} already has a task ${employee.currentTaskId}.`);
             return false;
         }
 
@@ -30,8 +30,8 @@ window.taskAssignment = (function() {
         task.status = 'inProgress';
         employee.currentTaskId = taskId;
 
-        // console.log(`[assignTaskToEmployee] Assigned task ${taskId} (${task.type}) to ${employeeId}.`);
-        window.ui.updateOperations();
+        console.log(`[assignTaskToEmployee] Assigned task ${taskId} (${task.type}) to ${employeeId} (${employee.firstName} ${employee.lastName})`);
+        window.renderOperationsPage(document.querySelector('.main-content')); // Update here
         return true;
     }
 
@@ -45,7 +45,7 @@ window.taskAssignment = (function() {
             return;
         }
         if (!task.assignedTo) {
-            // console.warn(`Task ${task.id} is not assigned to anyone.`);
+            console.warn(`Task ${task.id} is not assigned to anyone.`);
             return;
         }
 
@@ -56,8 +56,8 @@ window.taskAssignment = (function() {
         task.assignedTo = null;
         task.status = 'pending';
 
-        // console.log(`[unassignTask] Unassigned task ${task.id}, returning to pending.`);
-        window.ui.updateOperations();
+        console.log(`[unassignTask] Unassigned task ${task.id}, returning to pending.`);
+        window.renderOperationsPage(document.querySelector('.main-content')); // Update here
     }
 
     /**
@@ -95,6 +95,7 @@ window.taskAssignment = (function() {
      * Main logic to automatically assign tasks to free employees until no more assignments can be made.
      */
     function autoAssignTasks() {
+        console.log("[autoAssignTasks] Running auto-assignment logic");
         let madeAssignment = true;
 
         // We'll keep looping until we can't assign any more tasks in this pass
@@ -104,7 +105,7 @@ window.taskAssignment = (function() {
             // get all tasks that are pending & unassigned
             const unassignedTasks = window.taskManager.getUnassignedTasks();
             if (unassignedTasks.length === 0) {
-                // console.log("[autoAssignTasks] No unassigned tasks left.");
+                console.log("[autoAssignTasks] No unassigned tasks left.");
                 break;
             }
 
@@ -114,10 +115,11 @@ window.taskAssignment = (function() {
             // Attempt assignment
             for (let i = 0; i < prioritizedTasks.length; i++) {
                 const task = prioritizedTasks[i];
+                console.log(`[autoAssignTasks] Checking task ${task.id} (${task.type})`);
 
                 // skip fillPrescription if not enough materials
                 if (task.type === 'fillPrescription' && !canFillPrescription(task.prescriptionId)) {
-                    // console.warn(`[autoAssignTasks] Skipping fillPrescription for ${task.id}, not enough materials.`);
+                    console.warn(`[autoAssignTasks] Skipping fillPrescription for ${task.id}, not enough materials.`);
                     continue;
                 }
 
@@ -127,9 +129,11 @@ window.taskAssignment = (function() {
                     // attempt assignment
                     const assigned = assignTaskToEmployee(task.id, availableEmployee.id);
                     if (assigned) {
-                        // console.log(`[autoAssignTasks] Assigned ${task.id} to ${availableEmployee.id}.`);
+                        console.log(`[autoAssignTasks] Assigned ${task.id} to ${availableEmployee.id}.`);
                         madeAssignment = true;
                     }
+                } else {
+                    console.log(`[autoAssignTasks] No available employee for task ${task.id} (${task.type})`);
                 }
             }
         }
@@ -174,8 +178,10 @@ window.taskAssignment = (function() {
             return false;
         });
 
+        console.log(`[findAvailableEmployeeForTask] Eligible employees for task ${task.id} (${task.type}):`, eligibleEmployees);
+
         if (eligibleEmployees.length === 0) {
-            // console.log(`[findAvailableEmployeeForTask] No eligible employees for task ${task.id} (${task.type}).`);
+            console.log(`[findAvailableEmployeeForTask] No eligible employees for task ${task.id} (${task.type}).`);
             return null;
         }
 

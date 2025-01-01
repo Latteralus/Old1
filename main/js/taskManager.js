@@ -31,11 +31,6 @@ window.taskManager = (function() {
                 if (task.progress >= task.totalTime) {
                     task.status = 'completed';
                     finalizeTask(task);
-
-                    // unassign employee
-                    if (task.assignedTo) {
-                        window.taskAssignment.unassignTask(task.id);
-                    }
                 }
             }
         });
@@ -45,6 +40,8 @@ window.taskManager = (function() {
     }
 
     function finalizeTask(task) {
+        console.log(`[finalizeTask] Finalizing task: ${task.id} (${task.type})`); // Log task finalization
+
         if (task.type === 'production' && task.productId) {
             const prod = window.productsData.find(p => p.id === task.productId);
             if (prod) {
@@ -84,9 +81,10 @@ window.taskManager = (function() {
             }
         }
 
-        // conditionally update operations
-        if (window.currentPage === 'operations') {
-            window.updateUI('operations');
+        // Unassign employee from task, now that the task is fully completed.
+        if (task.assignedTo) {
+            console.log(`[finalizeTask] Unassigning employee from task: ${task.id}`);
+            window.taskAssignment.unassignTask(task.id);
         }
     }
 

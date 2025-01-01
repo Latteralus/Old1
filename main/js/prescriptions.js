@@ -4,23 +4,24 @@ window.prescriptions = {
     activePrescriptions: [],
 
     generatePrescription: function(customerId) {
+        console.log(`[prescriptions.js] Generating prescription for customer: ${customerId}`);
+
         const customer = window.customers.getCustomerById(customerId);
         if (!customer) {
-            console.error('No customer found for generatePrescription:', customerId);
+            console.error(`[prescriptions.js] No customer found for generatePrescription: ${customerId}`);
             return null;
         }
 
         // Pick an available product
         const unlockedProducts = window.research.getUnlockedProducts();
-        // Filter for equipment, etc. (omitted for brevity)
-        // Suppose we pick one randomly:
-        // e.g.:
         const productId = unlockedProducts[Math.floor(Math.random() * unlockedProducts.length)];
         const product = window.productsData.find(p => p.id === productId);
         if (!product) {
-            console.error('No product found for generatePrescription:', productId);
+            console.error(`[prescriptions.js] No product found for generatePrescription: ${productId}`);
             return null;
         }
+
+        console.log(`[prescriptions.js] Selected product: ${product.name} (${productId})`);
 
         const newPrescription = {
             id: `pres-${Date.now()}`,
@@ -35,6 +36,8 @@ window.prescriptions = {
             assignedEmployeeId: null
         };
         this.activePrescriptions.push(newPrescription);
+
+        console.log(`[prescriptions.js] Created prescription: ${newPrescription.id} for customer: ${customerId}`);
 
         // Create a fillPrescription task (not assigned yet)
         const fillTask = {
@@ -54,6 +57,8 @@ window.prescriptions = {
         };
         window.taskManager.addTask(fillTask);
 
+        console.log(`[prescriptions.js] Created fillPrescription task: ${fillTask.id}`);
+
         // Auto-assign tasks
         window.taskAssignment.autoAssignTasks();
 
@@ -61,20 +66,26 @@ window.prescriptions = {
     },
 
     updatePrescriptionStatus: function(prescriptionId, newStatus) {
+        console.log(`[prescriptions.js] Updating prescription status: ${prescriptionId} to ${newStatus}`);
+
         const prescription = this.activePrescriptions.find(p => p.id === prescriptionId);
         if (prescription) {
             prescription.status = newStatus;
             window.ui.updatePrescriptions();
+        } else {
+            console.error(`[prescriptions.js] Prescription not found: ${prescriptionId}`);
         }
     },
 
     // When fillPrescription completes
     prescriptionFilled: function (prescriptionId, customerId) {
+        console.log(`[prescriptions.js] Prescription filled: ${prescriptionId} for customer: ${customerId}`);
+
         this.updatePrescriptionStatus(prescriptionId, 'filled');
 
         const customer = window.customers.getCustomerById(customerId);
         if (!customer) {
-            console.warn(`Customer not found during prescriptionFilled: ${customerId}`);
+            console.warn(`[prescriptions.js] Customer not found during prescriptionFilled: ${customerId}`);
             return;
         }
 
@@ -94,12 +105,16 @@ window.prescriptions = {
         };
         window.taskManager.addTask(checkoutTask);
 
+        console.log(`[prescriptions.js] Created checkout task: ${checkoutTask.id}`);
+
         // Auto-assign
         window.taskAssignment.autoAssignTasks();
     },
 
     // Creates a consultation task for Pharmacist after check-in
     createConsultationTask: function (customerId) {
+        console.log(`[prescriptions.js] Creating consultation task for customer: ${customerId}`);
+
         const consultationTask = {
             id: `consult-${customerId}`,
             type: 'consultation',
@@ -111,6 +126,8 @@ window.prescriptions = {
             assignedTo: null
         };
         window.taskManager.addTask(consultationTask);
+
+        console.log(`[prescriptions.js] Created consultation task: ${consultationTask.id}`);
 
         // auto-assign
         window.taskAssignment.autoAssignTasks();
