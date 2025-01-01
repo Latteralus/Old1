@@ -31,7 +31,7 @@ window.taskAssignment = (function() {
         employee.currentTaskId = taskId;
 
         console.log(`[assignTaskToEmployee] Assigned task ${taskId} (${task.type}) to ${employeeId} (${employee.firstName} ${employee.lastName})`);
-        window.renderOperationsPage(document.querySelector('.main-content')); // Update here
+        window.renderOperationsPage(document.querySelector('.main-content'));
         return true;
     }
 
@@ -57,73 +57,82 @@ window.taskAssignment = (function() {
         task.status = 'pending';
 
         console.log(`[unassignTask] Unassigned task ${task.id}, returning to pending.`);
-        window.renderOperationsPage(document.querySelector('.main-content')); // Update here
+        window.renderOperationsPage(document.querySelector('.main-content'));
+
+        // Trigger auto-assign whenever a task is unassigned
+        window.taskAssignment.autoAssignTasks();
     }
 
     /**
      * Sorts tasks by priority:
-     * 1) consultation
-     * 2) customerInteraction
-     * 3) fillPrescription (only if enough materials)
-     * 4) production
-     * 5) everything else
+     * 1) fillPrescription
+     * 2) consultation
+     * 3) customerInteraction
+     * 4) compound (NEW)
+     * 5) production
+     * 6) everything else
      */
     function sortTasksByPriority(unassignedTasks) {
         return unassignedTasks.sort((a, b) => {
-            // consultation first
-            if (a.type === 'consultation' && b.type !== 'consultation') return -1;
-            if (b.type === 'consultation' && a.type !== 'consultation') return 1;
-
-            // then customerInteraction
-            if (a.type === 'customerInteraction' && b.type !== 'customerInteraction') return -1;
-            if (b.type === 'customerInteraction' && a.type !== 'customerInteraction') return 1;
-
-            // then fillPrescription
+            // Highest priority: fillPrescription
             if (a.type === 'fillPrescription' && b.type !== 'fillPrescription') return -1;
             if (b.type === 'fillPrescription' && a.type !== 'fillPrescription') return 1;
 
-            // then production
+            // Then: consultation
+            if (a.type === 'consultation' && b.type !== 'consultation') return -1;
+            if (b.type === 'consultation' && a.type !== 'consultation') return 1;
+
+            // Then: customerInteraction
+            if (a.type === 'customerInteraction' && b.type !== 'customerInteraction') return -1;
+            if (b.type === 'customerInteraction' && a.type !== 'customerInteraction') return 1;
+
+            // Then: compound (NEW)
+            if (a.type === 'compound' && b.type !== 'compound') return -1;
+            if (b.type === 'compound' && a.type !== 'compound') return 1;
+
+            // Then: production
             if (a.type === 'production' && b.type !== 'production') return -1;
             if (b.type === 'production' && a.type !== 'production') return 1;
 
-            // fallback: keep original order or compare IDs
+            // fallback: keep original order
             return 0;
         });
     }
 
     /**
-     * Main logic to automatically assign tasks to free employees until no more assignments can be made.
+     * Main logic to automatically assign tasks to free employees.
      */
     function autoAssignTasks() {
         console.log("[autoAssignTasks] Running auto-assignment logic");
         let madeAssignment = true;
 
-        // We'll keep looping until we can't assign any more tasks in this pass
         while (madeAssignment) {
             madeAssignment = false;
-
-            // get all tasks that are pending & unassigned
-            const unassignedTasks = window.taskManager.getUnassignedTasks();
+            const unassignedTasks = window.taskManager.getUnassignedTasks()
+            .filter(task => {
+                // Add filtering logic for compound tasks based on material availability
+                if (task.type === 'compound') {
+                    const product = window.productsData.find(p => p.id === task.productId);
+                    return window.production.canCompound(product);
+                }
+                return true;
+            });
             if (unassignedTasks.length === 0) {
                 console.log("[autoAssignTasks] No unassigned tasks left.");
                 break;
             }
 
-            // sort them by priority
             const prioritizedTasks = sortTasksByPriority(unassignedTasks);
 
-            // Attempt assignment
-            for (let i = 0; i < prioritizedTasks.length; i++) {
-                const task = prioritizedTasks[i];
+            for (let task of prioritizedTasks) {
                 console.log(`[autoAssignTasks] Checking task ${task.id} (${task.type})`);
 
-                // skip fillPrescription if not enough materials
+                // For fillPrescription, check inventory
                 if (task.type === 'fillPrescription' && !canFillPrescription(task.prescriptionId)) {
-                    console.warn(`[autoAssignTasks] Skipping fillPrescription for ${task.id}, not enough materials.`);
+                    console.warn(`[autoAssignTasks] Skipping fillPrescription for ${task.id}, not enough product in inventory.`);
                     continue;
                 }
 
-                // find an available employee for the task
                 const availableEmployee = findAvailableEmployeeForTask(task);
                 if (availableEmployee) {
                     // attempt assignment
@@ -131,6 +140,7 @@ window.taskAssignment = (function() {
                     if (assigned) {
                         console.log(`[autoAssignTasks] Assigned ${task.id} to ${availableEmployee.id}.`);
                         madeAssignment = true;
+                        window.taskAssignment.autoAssignTasks();
                     }
                 } else {
                     console.log(`[autoAssignTasks] No available employee for task ${task.id} (${task.type})`);
@@ -140,7 +150,7 @@ window.taskAssignment = (function() {
     }
 
     /**
-     * Checks if we have enough material to fill a prescription.
+     * Checks if we have enough product INVENTORY to fill a prescription.
      */
     function canFillPrescription(prescriptionId) {
         const prescription = window.prescriptions.getPrescription(prescriptionId);
@@ -153,29 +163,29 @@ window.taskAssignment = (function() {
             console.error(`Product ${prescription.productId} not found in canFillPrescription.`);
             return false;
         }
-        // compare potentialProduction to the dosage
-        return window.helpers.calculatePotentialProduction(product.id) >= prescription.dosage;
+
+        // Check if there's enough product inventory
+        return product.inventory >= prescription.dosage;
     }
 
     /**
-     * Selects an appropriate employee for a given task based on roles and relevant skills.
+     * Selects an appropriate employee for a given task based on roles and skills.
      */
     function findAvailableEmployeeForTask(task) {
-        // Filter employees who are free (no currentTaskId)
         const eligibleEmployees = window.employeesData.filter(emp => {
-            if (emp.currentTaskId) return false; // busy
+            if (emp.currentTaskId) return false; // Employee is already assigned to a task
 
-            if (task.type === 'customerInteraction') {
-                return emp.role === 'Cashier';
-            } else if (task.type === 'consultation') {
-                return emp.role === 'Pharmacist';
-            } else if (task.type === 'fillPrescription') {
-                return emp.role === 'Lab Technician';
-            } else if (task.type === 'production') {
-                return emp.role === 'Lab Technician';
-            }
-            // else no role qualifies
-            return false;
+            // Define roles eligible for each task type
+            const eligibleRoles = {
+                'customerInteraction': ['Cashier'],
+                'consultation': ['Pharmacist'],
+                'fillPrescription': ['Lab Technician'],
+                'compound': ['Lab Technician'],
+                'production': ['Lab Technician']
+            };
+
+            // Check if the employee's role is eligible for the task type
+            return eligibleRoles[task.type]?.includes(emp.role) || false;
         });
 
         console.log(`[findAvailableEmployeeForTask] Eligible employees for task ${task.id} (${task.type}):`, eligibleEmployees);
@@ -186,29 +196,23 @@ window.taskAssignment = (function() {
         }
 
         // Choose the employee with the highest relevant skill
-        if (task.type === 'fillPrescription') {
-            // prioritize dispensing skill
+        const skillPriorities = {
+            'fillPrescription': 'dispensing',
+            'consultation': 'customerService',
+            'customerInteraction': 'customerService',
+            'compound': 'compounding',
+            'production': 'compounding'
+        };
+
+        const relevantSkill = skillPriorities[task.type];
+        if (relevantSkill) {
             return eligibleEmployees.reduce((best, cur) =>
-                cur.skills.dispensing > best.skills.dispensing ? cur : best
-            , eligibleEmployees[0]);
-        } else if (task.type === 'consultation') {
-            // prioritize customerService
-            return eligibleEmployees.reduce((best, cur) =>
-                cur.skills.customerService > best.skills.customerService ? cur : best
-            , eligibleEmployees[0]);
-        } else if (task.type === 'customerInteraction') {
-            // also prioritize customerService
-            return eligibleEmployees.reduce((best, cur) =>
-                cur.skills.customerService > best.skills.customerService ? cur : best
-            , eligibleEmployees[0]);
-        } else if (task.type === 'production') {
-            // prioritize compounding
-            return eligibleEmployees.reduce((best, cur) =>
-                cur.skills.compounding > best.skills.compounding ? cur : best
-            , eligibleEmployees[0]);
+                cur.skills[relevantSkill] > best.skills[relevantSkill] ? cur : best,
+                eligibleEmployees[0]
+            );
         }
 
-        // fallback
+        // Fallback: return the first eligible employee if no specific skill is prioritized
         return eligibleEmployees[0];
     }
 

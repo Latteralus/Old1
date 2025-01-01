@@ -50,7 +50,9 @@ const productsData = [
             { id: 'ing004', quantity: 5 }    // Talc Powder
         ],
         equipmentNeeded: ['eq001', 'eq002', 'eq003'], // Mortar & Pestle, Tablet Press, Powder Blender
-        productionTime: 15
+        productionTime: 15,
+        maxInventory: 5,
+        inventory: 0
     },
     {
         id: 'pd002',
@@ -67,7 +69,9 @@ const productsData = [
             { id: 'ing008', quantity: 5 }    // Magnesium Stearate
         ],
         equipmentNeeded: ['eq004', 'eq003', 'eq001'], // Capsule Filler, Powder Blender, Mortar & Pestle
-        productionTime: 20
+        productionTime: 20,
+        maxInventory: 5,
+        inventory: 0
     },
     {
         id: 'pd003',
@@ -85,7 +89,9 @@ const productsData = [
             { id: 'ing013', quantity: 15 }   // Glycerin
         ],
         equipmentNeeded: ['eq005', 'eq006', 'eq007'], // Magnetic Stirrer, Measuring Cylinders, Suspension Mixer
-        productionTime: 25
+        productionTime: 25,
+        maxInventory: 5,
+        inventory: 0
     },
     {
         id: 'pd004',
@@ -102,7 +108,9 @@ const productsData = [
             { id: 'ing004', quantity: 5 }    // Talc Powder
         ],
         equipmentNeeded: ['eq001', 'eq002', 'eq003'],
-        productionTime: 15
+        productionTime: 15,
+        maxInventory: 5,
+        inventory: 0
     },
     {
         id: 'pd005',
@@ -119,7 +127,9 @@ const productsData = [
             { id: 'ing008', quantity: 5 }    // Magnesium Stearate
         ],
         equipmentNeeded: ['eq004', 'eq003', 'eq001'],
-        productionTime: 20
+        productionTime: 20,
+        maxInventory: 5,
+        inventory: 0
     },
     {
         id: 'pd006',
@@ -136,7 +146,9 @@ const productsData = [
             { id: 'ing004', quantity: 5 }    // Talc Powder
         ],
         equipmentNeeded: ['eq001', 'eq002', 'eq003'],
-        productionTime: 15
+        productionTime: 15,
+        maxInventory: 5,
+        inventory: 0
     },
     {
         id: 'pd007',
@@ -153,7 +165,9 @@ const productsData = [
             { id: 'ing004', quantity: 5 }    // Talc Powder
         ],
         equipmentNeeded: ['eq001', 'eq002', 'eq003'],
-        productionTime: 18
+        productionTime: 18,
+        maxInventory: 5,
+        inventory: 0
     },
     {
         id: 'pd008',
@@ -170,7 +184,9 @@ const productsData = [
             { id: 'ing004', quantity: 5 }    // Talc Powder
         ],
         equipmentNeeded: ['eq001', 'eq002', 'eq003'],
-        productionTime: 15
+        productionTime: 15,
+        maxInventory: 5,
+        inventory: 0
     },
     {
         id: 'pd009',
@@ -187,7 +203,9 @@ const productsData = [
             { id: 'ing004', quantity: 5 }    // Talc Powder
         ],
         equipmentNeeded: ['eq001', 'eq002', 'eq003'],
-        productionTime: 20
+        productionTime: 20,
+        maxInventory: 5,
+        inventory: 0
     },
     {
         id: 'pd010',
@@ -204,7 +222,9 @@ const productsData = [
             { id: 'ing004', quantity: 5 }    // Talc Powder
         ],
         equipmentNeeded: ['eq001', 'eq002', 'eq003'],
-        productionTime: 15
+        productionTime: 15,
+        maxInventory: 5,
+        inventory: 0
     },
     {
         id: 'pd011',
@@ -221,7 +241,9 @@ const productsData = [
             { id: 'ing004', quantity: 5 }    // Talc Powder
         ],
         equipmentNeeded: ['eq001', 'eq002', 'eq003'],
-        productionTime: 20
+        productionTime: 20,
+        maxInventory: 5,
+        inventory: 0
     },
     {
         id: 'pd012',
@@ -238,7 +260,9 @@ const productsData = [
             { id: 'ing004', quantity: 5 }    // Talc Powder
         ],
         equipmentNeeded: ['eq001', 'eq002', 'eq003'],
-        productionTime: 15
+        productionTime: 15,
+        maxInventory: 5,
+        inventory: 0
     },
     {
         id: 'pd013',
@@ -255,7 +279,9 @@ const productsData = [
             { id: 'ing004', quantity: 5 }    // Talc Powder
         ],
         equipmentNeeded: ['eq001', 'eq002', 'eq003'],
-        productionTime: 20
+        productionTime: 20,
+        maxInventory: 5,
+        inventory: 0
     },
     {
         id: 'pd014',
@@ -272,7 +298,9 @@ const productsData = [
             { id: 'ing004', quantity: 5 }    // Talc Powder
         ],
         equipmentNeeded: ['eq001', 'eq002', 'eq003'],
-        productionTime: 15
+        productionTime: 15,
+        maxInventory: 5,
+        inventory: 0
     },
     {
         id: 'pd015',
@@ -289,7 +317,9 @@ const productsData = [
             { id: 'ing004', quantity: 5 }    // Talc Powder
         ],
         equipmentNeeded: ['eq001', 'eq002', 'eq003'],
-        productionTime: 20
+        productionTime: 20,
+        maxInventory: 5,
+        inventory: 0
     },
     {
         id: 'pd016',
@@ -307,7 +337,9 @@ const productsData = [
             { id: 'ing013', quantity: 15 }   // Glycerin
         ],
         equipmentNeeded: ['eq005', 'eq006', 'eq007'],
-        productionTime: 25
+        productionTime: 25,
+        maxInventory: 5,
+        inventory: 0
     },
     {
         id: 'pd017',
@@ -324,7 +356,9 @@ const productsData = [
             { id: 'ing013', quantity: 5 }    // Glycerin
         ],
         equipmentNeeded: ['eq017', 'eq001', 'eq013'], // Gel Mixer, Mortar & Pestle, Spatula
-        productionTime: 15
+        productionTime: 15,
+        maxInventory: 5,
+        inventory: 0
     },
     {
         id: 'pd018',
@@ -341,7 +375,9 @@ const productsData = [
             { id: 'ing004', quantity: 5 }    // Talc Powder
         ],
         equipmentNeeded: ['eq001', 'eq002', 'eq003'],
-        productionTime: 25
+        productionTime: 25,
+        maxInventory: 5,
+        inventory: 0
     },
     {
         id: 'pd019',
@@ -357,7 +393,9 @@ const productsData = [
             { id: 'ing031', quantity: 10 }   // Ethanol or other carrier
         ],
         equipmentNeeded: ['eq019', 'eq001', 'eq003'], // Inhaler Filling Machine, Mortar & Pestle, Powder Blender
-        productionTime: 30
+        productionTime: 30,
+        maxInventory: 5,
+        inventory: 0
     },
     {
         id: 'pd020',
@@ -374,7 +412,9 @@ const productsData = [
             { id: 'ing004', quantity: 5 }    // Talc Powder
         ],
         equipmentNeeded: ['eq001', 'eq002', 'eq003'],
-        productionTime: 15
+        productionTime: 15,
+        maxInventory: 5,
+        inventory: 0
     },
     {
         id: 'pd021',
@@ -391,7 +431,9 @@ const productsData = [
             { id: 'ing003', quantity: 5 }     // Magnesium Stearate
         ],
         equipmentNeeded: ['eq001', 'eq002', 'eq003'],
-        productionTime: 30
+        productionTime: 30,
+        maxInventory: 5,
+        inventory: 0
     },
     {
         id: 'pd022',
@@ -409,7 +451,9 @@ const productsData = [
             { id: 'ing013', quantity: 10 }   // Glycerin
         ],
         equipmentNeeded: ['eq005', 'eq006', 'eq007'],
-        productionTime: 20
+        productionTime: 20,
+        maxInventory: 5,
+        inventory: 0
     },
     {
         id: 'pd023',
@@ -427,7 +471,9 @@ const productsData = [
             { id: 'ing050', quantity: 5 }    // Flavoring agent
         ],
         equipmentNeeded: ['eq005', 'eq006', 'eq008'], // Magnetic Stirrer, Measuring Cylinders, Syrup Mixer
-        productionTime: 25
+        productionTime: 25,
+        maxInventory: 5,
+        inventory: 0
     },
     {
         id: 'pd024',
@@ -444,7 +490,9 @@ const productsData = [
             { id: 'ing050', quantity: 10 }   // Flavoring/sweetener
         ],
         equipmentNeeded: ['eq005', 'eq006'],
-        productionTime: 15
+        productionTime: 15,
+        maxInventory: 5,
+        inventory: 0
     },
     {
         id: 'pd025',
@@ -461,7 +509,9 @@ const productsData = [
             { id: 'ing062', quantity: 5 }    // Stabilizing agent
         ],
         equipmentNeeded: ['eq015', 'eq016'], // Sterile Mixing Equipment, Autoclave
-        productionTime: 30
+        productionTime: 30,
+        maxInventory: 5,
+        inventory: 0
     }
 ];
 

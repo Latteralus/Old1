@@ -14,8 +14,8 @@ window.gameState = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize data (if necessary, you might want to move this to their respective files)
-    // Example: window.employees.initialize(); 
+    // Initialize data
+    window.production.init();
 
     // Render the top bar and append it to the root element
     const topBar = window.renderTopBar();
@@ -35,11 +35,11 @@ document.addEventListener('DOMContentLoaded', () => {
     window.updateActiveNavItem('dashboard');
 
     // Start the game day (set isDayActive to true)
-    window.gameState.isDayActive = true; // Add this line to start the day initially
+    window.gameState.isDayActive = true;
 
     // Start the game loop
     setInterval(() => {
-        console.log("Game loop tick", window.gameState.currentDate); // Add this for debugging
+        console.log("Game loop tick", window.gameState.currentDate);
         if (window.gameState.isDayActive) {
             window.gameState.currentDate.setMinutes(window.gameState.currentDate.getMinutes() + 1);
 
@@ -54,8 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             window.ui.updateTime();
-            // Only update finances if there's a change (you'll need to modify your functions to track this)
-            // window.ui.updateFinances(); 
+            // window.ui.updateFinances(); // Consider removing this if not necessary to update every second
         }
     }, 1000);
 });

@@ -8,7 +8,7 @@ frontend:
       commands:
         - echo "Ensuring static site files are ready"
   artifacts:
-    baseDirectory: ThePharmacy/main  # Correct directory for static site files
+    baseDirectory: main  # Correctly point to the main directory
     files:
       - '**/*'  # Include all files and subdirectories
   cache:
