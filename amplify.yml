@@ -3,13 +3,14 @@ frontend:
   phases:
     preBuild:
       commands:
-        - echo "No pre-build commands needed for static site"
+        - npm --prefix ./client ci # Install frontend dependencies
     build:
       commands:
-        - echo "Ensuring static site files are ready"
+        - npm run build --prefix ./client # Build the React app
   artifacts:
-    baseDirectory: main  # Correct base directory for your files
+    baseDirectory: client/build
     files:
-      - '**/*'  # Include all files
+      - '**/*'
   cache:
-    paths: []
+    paths:
+      - client/node_modules/**/*

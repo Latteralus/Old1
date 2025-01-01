@@ -1,0 +1,29 @@
+/* TopBar.css */
+
+.top-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: var(--top-bar-height);
+    background-color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+  }
+  
+  .top-bar-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 16px;
+  }
+  
+  .top-bar-left .game-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+  }
+  
