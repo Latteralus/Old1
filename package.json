@@ -1,0 +1,17 @@
+{
+  "name": "pharmacy-app",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": ["client", "server"],
+  "scripts": {
+    "start": "npm run start:client & npm run start:server",
+    "start:client": "npm --prefix client start",
+    "start:server": "npm --prefix server start",
+    "build": "npm run build:client",
+    "build:client": "npm --prefix client build",
+    "install:all": "npm install --legacy-peer-deps",
+    "test": "npm run test:client & npm run test:server",
+    "test:client": "npm --prefix client test",
+    "test:server": "npm --prefix server test"
+  }
+}
