@@ -20,8 +20,8 @@ const pool = new Pool({
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
-    saveUninitialized: false, // Avoid creating sessions for unauthenticated users
-    cookie: { maxAge: 24 * 60 * 60 * 1000 } // Session lasts for 24 hours
+    saveUninitialized: false,
+    cookie: { maxAge: 24 * 60 * 60 * 1000 }, // Session lasts for 24 hours
 }));
 
 // Middleware
@@ -31,35 +31,38 @@ app.use(express.urlencoded({ extended: false })); // For parsing form data
 // Authentication middleware
 function isAuthenticated(req, res, next) {
     if (req.session && req.session.userId) {
-        next(); // User is authenticated, proceed
+        next();
     } else {
-        res.redirect('/login'); // Redirect to login if not authenticated
+        res.redirect('/login');
     }
 }
 
 // Routes
 app.get('/', (req, res) => {
-    res.redirect('/login'); // Default route redirects to login
+    if (req.session && req.session.userId) {
+        return res.redirect('/dashboard');
+    }
+    res.redirect('/login');
 });
 
-// Login route
 app.get('/login', (req, res) => {
     if (req.session && req.session.userId) {
-        return res.redirect('/dashboard'); // Redirect logged-in users to dashboard
+        return res.redirect('/dashboard');
     }
-    res.render('login', { error: null }); // Show login page
+    res.render('login', { error: null });
 });
 
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
 
     try {
-        const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+        const result = await pool.query('SELECT * FROM users WHERE username = $1', [username.trim()]);
         const user = result.rows[0];
 
         if (user && bcrypt.compareSync(password, user.password_hash)) {
             req.session.userId = user.id;
-            res.redirect('/dashboard'); // Redirect to dashboard after successful login
+            req.session.username = user.username;
+            res.redirect('/dashboard');
         } else {
             res.render('login', { error: 'Invalid username or password' });
         }
@@ -69,28 +72,23 @@ app.post('/login', async (req, res) => {
     }
 });
 
-// Register route (GET)
 app.get('/register', (req, res) => {
-    res.render('register', { error: null }); // Render the registration page
+    res.render('register', { error: null });
 });
 
-// Register route (POST)
 app.post('/register', async (req, res) => {
     const { username, email, password, confirmPassword, terms } = req.body;
 
     try {
-        // 1. Check if the user agreed to terms
         if (!terms) {
             return res.render('register', { error: 'You must agree to the terms and policies.' });
         }
 
-        // 2. Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
+        if (!emailRegex.test(email.trim())) {
             return res.render('register', { error: 'Invalid email format.' });
         }
 
-        // 3. Enforce password complexity
         const passwordRegex = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
         if (!passwordRegex.test(password)) {
             return res.render('register', {
@@ -98,30 +96,25 @@ app.post('/register', async (req, res) => {
             });
         }
 
-        // 4. Check if passwords match
         if (password !== confirmPassword) {
             return res.render('register', { error: 'Passwords do not match.' });
         }
 
-        // 5. Check if username or email already exists in the database
         const existingUser = await pool.query(
             'SELECT * FROM users WHERE username = $1 OR email = $2',
-            [username, email]
+            [username.trim(), email.trim()]
         );
         if (existingUser.rows.length > 0) {
             return res.render('register', { error: 'Username or email already exists.' });
         }
 
-        // 6. Hash the password
         const hashedPassword = bcrypt.hashSync(password, 10);
 
-        // 7. Insert the new user into the database
         await pool.query(
             'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3)',
-            [username, email, hashedPassword]
+            [username.trim(), email.trim(), hashedPassword]
         );
 
-        // 8. Redirect to the login page after successful registration
         res.redirect('/login');
     } catch (error) {
         console.error(error);
@@ -129,21 +122,29 @@ app.post('/register', async (req, res) => {
     }
 });
 
-// Dashboard route
 app.get('/dashboard', isAuthenticated, (req, res) => {
-    res.send('Welcome to PharmaSim Dashboard!'); // Replace with your dashboard content
+    res.render('dashboard', { username: req.session.username });
 });
 
-// Logout route
 app.get('/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
             console.error(err);
-            return res.redirect('/dashboard'); // Redirect back to dashboard on error
+            return res.redirect('/dashboard');
         }
-        res.clearCookie('connect.sid'); // Clear session cookie
-        res.redirect('/login'); // Redirect to login after logout
+        res.clearCookie('connect.sid');
+        res.redirect('/login');
     });
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send('Something went wrong!');
+});
+
+app.use((req, res) => {
+    res.status(404).send('Page not found');
 });
 
 // Start server
