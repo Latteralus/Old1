@@ -8,8 +8,8 @@ frontend:
       commands:
         - echo "Ensuring static site files are ready"
   artifacts:
-    baseDirectory: main  # Correctly point to the main directory
+    baseDirectory: main  # Correct base directory for your files
     files:
-      - '**/*'  # Include all files and subdirectories
+      - '**/*'  # Include all files
   cache:
     paths: []

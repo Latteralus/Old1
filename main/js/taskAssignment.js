@@ -58,7 +58,6 @@ window.taskAssignment = (function() {
 
         console.log(`[unassignTask] Unassigned task ${task.id}, returning to pending.`);
         window.renderOperationsPage(document.querySelector('.main-content'));
-
         // Trigger auto-assign whenever a task is unassigned
         window.taskAssignment.autoAssignTasks();
     }

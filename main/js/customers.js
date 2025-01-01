@@ -25,7 +25,7 @@ window.customers = {
         const newCustomer = {
             id: `cust-${Date.now()}`,
             type: customerType,
-            status: 'waitingForCheckIn',  // Changed from 'awaitingInteraction'
+            status: 'waitingForCheckIn',
             arrivedAt: window.gameState.currentDate.getTime(),
             insurance: insurance,
             prescriptionId: null,
@@ -38,7 +38,7 @@ window.customers = {
 
         this.activeCustomers.push(newCustomer);
 
-        // Generate and assign a prescription (but we won't do a fill task here)
+        // Generate and assign a prescription
         const prescriptionId = window.prescriptions.generatePrescription(newCustomer.id);
         this.assignPrescription(newCustomer.id, prescriptionId);
 
@@ -60,8 +60,9 @@ window.customers = {
 
         // Trigger UI updates
         window.ui.updateCustomers();
+        // Only render operations page if it's the current page
         if (window.currentPage === 'operations') {
-            window.renderOperationsPage(document.querySelector('.main-content')); // Update here
+            window.renderOperationsPage(document.querySelector('.main-content'));
         }
     },
 
@@ -85,8 +86,9 @@ window.customers = {
 
             // Update UI
             window.ui.updateCustomers();
+            // Only render operations page if it's the current page
             if (window.currentPage === 'operations') {
-                window.renderOperationsPage(document.querySelector('.main-content')); // Update here
+                window.renderOperationsPage(document.querySelector('.main-content'));
             }
         }
     },
@@ -111,8 +113,9 @@ window.customers = {
 
             // UI update
             window.ui.updateCustomers();
+            // Only render operations page if it's the current page
             if (window.currentPage === 'operations') {
-                window.renderOperationsPage(document.querySelector('.main-content')); // Update here
+                window.renderOperationsPage(document.querySelector('.main-content'));
             }
 
             console.log(`Customer ${customerId} left.`);
@@ -127,7 +130,7 @@ window.customers = {
                 if (customer.patience <= 0) {
                     this.customerLeaves(customerId);
                 }
-            }, 60 * 1000);
+            }, 60 * 1000); // 60 seconds * 1000 milliseconds = 1 minute
         }
     },
 
