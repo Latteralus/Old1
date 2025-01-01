@@ -5,6 +5,7 @@ window.taskManager = (function() {
 
     function addTask(task) {
         tasks.push(task);
+        console.log(`[taskManager.js] Task added: ${task.type} - ${task.id}`);
     }
 
     function getUnassignedTasks() {
@@ -19,10 +20,17 @@ window.taskManager = (function() {
         tasks.forEach(task => {
             if (task.status === 'inProgress') {
                 if (task.type === 'fillPrescription') {
-                    // check materials
-                    const canStillFill = window.taskAssignment.canFillPrescription(task.prescriptionId);
-                    if (!canStillFill) {
-                        console.warn("Insufficient materials mid-task; unassigning employee.");
+                    // For fillPrescription, check product inventory
+                    if (!window.taskAssignment.canFillPrescription(task.prescriptionId)) {
+                        console.warn(`[taskManager.js] Insufficient ${task.productName} in inventory for fillPrescription task; unassigning employee.`);
+                        window.taskAssignment.unassignTask(task.id);
+                        return;
+                    }
+                } else if (task.type === 'compound') {
+                    // For compound, check if there are enough materials
+                    const product = window.productsData.find(p => p.id === task.productId);
+                    if (!window.production.canCompound(product)) {
+                        console.warn(`[taskManager.js] Insufficient materials to compound ${product.name}; unassigning employee.`);
                         window.taskAssignment.unassignTask(task.id);
                         return;
                     }
@@ -34,24 +42,31 @@ window.taskManager = (function() {
                 }
             }
         });
-
-        // auto-assign
-        window.taskAssignment.autoAssignTasks();
     }
 
     function finalizeTask(task) {
-        console.log(`[finalizeTask] Finalizing task: ${task.id} (${task.type})`); // Log task finalization
+        console.log(`[finalizeTask] Finalizing task: ${task.id} (${task.type})`);
 
-        if (task.type === 'production' && task.productId) {
+        // Unassign employee from task before anything else
+        if (task.assignedTo) {
+            console.log(`[finalizeTask] Unassigning employee from task: ${task.id}`);
+            window.taskAssignment.unassignTask(task.id);
+        }
+
+        if (task.type === 'compound' && task.productId) {
             const prod = window.productsData.find(p => p.id === task.productId);
             if (prod) {
-                prod.inventory += 1;
+                // Increase the product inventory
+                prod.inventory += task.quantityToMake;
+                console.log(`[finalizeTask] ${task.quantityToMake} units of ${prod.name} added to inventory.`);
             }
         }
         else if (task.type === 'fillPrescription') {
             const prod = window.productsData.find(p => p.id === task.productId);
             if (prod) {
-                prod.inventory = Math.max(prod.inventory - (task.quantityNeeded || 1), 0);
+                // Decrease the product inventory since it's taken directly from stock now
+                prod.inventory = Math.max(prod.inventory - task.quantityNeeded, 0);
+                console.log(`[finalizeTask] ${task.quantityNeeded} units of ${prod.name} removed from inventory.`);
             }
             if (task.customerId) {
                 window.prescriptions.prescriptionFilled(task.prescriptionId, task.customerId);
@@ -61,11 +76,9 @@ window.taskManager = (function() {
             if (task.customerId) {
                 const customer = window.customers.getCustomerById(task.customerId);
                 if (customer) {
-                    // Check-in finished -> 'waitingForConsultation'
                     if (customer.status === 'waitingForCheckIn') {
                         window.customers.updateCustomerStatus(task.customerId, 'waitingForConsultation');
                     }
-                    // Checkout -> completed
                     else if (customer.status === 'readyForCheckout') {
                         window.finances.completePrescription(task.customerId, customer.prescriptionId);
                         window.customers.updateCustomerStatus(task.customerId, 'completed');
@@ -76,15 +89,13 @@ window.taskManager = (function() {
         }
         else if (task.type === 'consultation') {
             if (task.customerId) {
-                // After consult, go 'waitingForFill'
                 window.customers.updateCustomerStatus(task.customerId, 'waitingForFill');
             }
         }
-
-        // Unassign employee from task, now that the task is fully completed.
-        if (task.assignedTo) {
-            console.log(`[finalizeTask] Unassigning employee from task: ${task.id}`);
-            window.taskAssignment.unassignTask(task.id);
+        // Remove the completed task from the tasks array
+        const taskIndex = tasks.findIndex(t => t.id === task.id);
+        if (taskIndex > -1) {
+            tasks.splice(taskIndex, 1);
         }
     }
 
