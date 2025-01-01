@@ -25,7 +25,7 @@ window.customers = {
         const newCustomer = {
             id: `cust-${Date.now()}`,
             type: customerType,
-            status: 'waitingForCheckIn',  // Changed from 'awaitingInteraction'
+            status: 'waitingForCheckIn',  // Changed from 'awaitingInteraction'
             arrivedAt: window.gameState.currentDate.getTime(),
             insurance: insurance,
             prescriptionId: null,
@@ -60,7 +60,7 @@ window.customers = {
 
         // Trigger UI updates
         window.ui.updateCustomers();
-        window.ui.updateOperations();
+        window.renderOperationsPage(document.querySelector('.main-content')); // Update here
     },
 
     // Assign a prescription to the customer
@@ -83,7 +83,7 @@ window.customers = {
 
             // Update UI
             window.ui.updateCustomers();
-            window.ui.updateOperations();
+            window.renderOperationsPage(document.querySelector('.main-content')); // Update here
         }
     },
 
@@ -107,7 +107,7 @@ window.customers = {
 
             // UI update
             window.ui.updateCustomers();
-            window.ui.updateOperations();
+            window.renderOperationsPage(document.querySelector('.main-content')); // Update here
 
             console.log(`Customer ${customerId} left.`);
         }
