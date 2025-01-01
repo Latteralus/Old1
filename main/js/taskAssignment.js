@@ -58,6 +58,9 @@ window.taskAssignment = (function() {
 
         console.log(`[unassignTask] Unassigned task ${task.id}, returning to pending.`);
         window.renderOperationsPage(document.querySelector('.main-content'));
+
+        // Trigger auto-assign whenever a task is unassigned
+        window.taskAssignment.autoAssignTasks();
     }
 
     /**
@@ -132,10 +135,12 @@ window.taskAssignment = (function() {
 
                 const availableEmployee = findAvailableEmployeeForTask(task);
                 if (availableEmployee) {
+                    // attempt assignment
                     const assigned = assignTaskToEmployee(task.id, availableEmployee.id);
                     if (assigned) {
                         console.log(`[autoAssignTasks] Assigned ${task.id} to ${availableEmployee.id}.`);
                         madeAssignment = true;
+                        window.taskAssignment.autoAssignTasks();
                     }
                 } else {
                     console.log(`[autoAssignTasks] No available employee for task ${task.id} (${task.type})`);

@@ -60,7 +60,9 @@ window.customers = {
 
         // Trigger UI updates
         window.ui.updateCustomers();
-        window.renderOperationsPage(document.querySelector('.main-content')); // Update here
+        if (window.currentPage === 'operations') {
+            window.renderOperationsPage(document.querySelector('.main-content')); // Update here
+        }
     },
 
     // Assign a prescription to the customer
@@ -83,7 +85,9 @@ window.customers = {
 
             // Update UI
             window.ui.updateCustomers();
-            window.renderOperationsPage(document.querySelector('.main-content')); // Update here
+            if (window.currentPage === 'operations') {
+                window.renderOperationsPage(document.querySelector('.main-content')); // Update here
+            }
         }
     },
 
@@ -107,7 +111,9 @@ window.customers = {
 
             // UI update
             window.ui.updateCustomers();
-            window.renderOperationsPage(document.querySelector('.main-content')); // Update here
+            if (window.currentPage === 'operations') {
+                window.renderOperationsPage(document.querySelector('.main-content')); // Update here
+            }
 
             console.log(`Customer ${customerId} left.`);
         }

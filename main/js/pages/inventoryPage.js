@@ -16,13 +16,14 @@ window.renderInventoryPage = function (mainContent) {
     subtitle.textContent = 'View and manage your product and material inventory.';
     container.appendChild(subtitle);
 
-    // New Section for Setting All Product Prices
-    const setPricesSection = document.createElement('div');
-    setPricesSection.className = 'set-prices-section';
+    // New Section for Setting All Product Prices and Max Inventory
+    const settingsSection = document.createElement('div');
+    settingsSection.className = 'settings-section';
 
+    // Set All Prices
     const setPricesLabel = document.createElement('label');
     setPricesLabel.textContent = 'Set All Products:';
-    setPricesSection.appendChild(setPricesLabel);
+    settingsSection.appendChild(setPricesLabel);
 
     const suggestedPriceButton = document.createElement('button');
     suggestedPriceButton.textContent = 'Set to Suggested Price';
@@ -30,14 +31,14 @@ window.renderInventoryPage = function (mainContent) {
         window.finances.setToSuggestedPrices();
         renderProducts(); // Re-render the products to show updated prices
     };
-    setPricesSection.appendChild(suggestedPriceButton);
+    settingsSection.appendChild(suggestedPriceButton);
 
     const markupInput = document.createElement('input');
     markupInput.type = 'number';
     markupInput.placeholder = 'Markup %';
     markupInput.min = '0';
     markupInput.value = '25'; // Default markup
-    setPricesSection.appendChild(markupInput);
+    settingsSection.appendChild(markupInput);
 
     const applyMarkupButton = document.createElement('button');
     applyMarkupButton.textContent = 'Apply Markup';
@@ -50,9 +51,38 @@ window.renderInventoryPage = function (mainContent) {
             alert('Invalid markup percentage entered.');
         }
     };
-    setPricesSection.appendChild(applyMarkupButton);
+    settingsSection.appendChild(applyMarkupButton);
 
-    container.appendChild(setPricesSection);
+    // Set Max Inventory for All Products
+    const setMaxInvLabel = document.createElement('label');
+    setMaxInvLabel.textContent = 'Set Max Inventory for All:';
+    setMaxInvLabel.style.marginLeft = "15px";
+    settingsSection.appendChild(setMaxInvLabel);
+
+    const maxInvInput = document.createElement('input');
+    maxInvInput.type = 'number';
+    maxInvInput.placeholder = 'Max Inventory';
+    maxInvInput.min = '0';
+    maxInvInput.value = '25'; // Default max inventory
+    settingsSection.appendChild(maxInvInput);
+
+    const applyMaxInvButton = document.createElement('button');
+    applyMaxInvButton.textContent = 'Apply to All';
+    applyMaxInvButton.onclick = () => {
+        const maxInventory = parseInt(maxInvInput.value);
+        if (!isNaN(maxInventory)) {
+            window.productsData.forEach(product => {
+                product.maxInventory = maxInventory;
+            });
+            renderProducts(); // Re-render the products to show updated max inventory
+            console.log(`Max inventory for all products set to ${maxInventory}`);
+        } else {
+            alert('Invalid max inventory entered.');
+        }
+    };
+    settingsSection.appendChild(applyMaxInvButton);
+
+    container.appendChild(settingsSection);
 
     // Filter/Search Bar
     const filterRow = document.createElement('div');
@@ -162,22 +192,22 @@ window.renderInventoryPage = function (mainContent) {
             potentialLabel.textContent = `Can Make: ${potentialProduction}`;
             card.appendChild(potentialLabel);
 
-            // Quick Order
+            // Quick Order for Compounding
             const quickOrderDiv = document.createElement('div');
             quickOrderDiv.className = 'quick-order-row';
             const quickOrderLabel = document.createElement('strong');
-            quickOrderLabel.textContent = 'Quick Order:';
+            quickOrderLabel.textContent = 'Quick Compound:';
             const quantityInput = document.createElement('input');
             quantityInput.type = 'number';
             quantityInput.min = '1';
             quantityInput.value = '1'; // Default value
             quantityInput.className = 'quick-order-input';
             const orderButton = document.createElement('button');
-            orderButton.textContent = 'Order';
+            orderButton.textContent = 'Compound';
             orderButton.onclick = () => {
                 const quantity = parseInt(quantityInput.value);
                 if (!isNaN(quantity) && quantity > 0) {
-                    window.helpers.orderMaterialsForProduct(prod.id, quantity);
+                    window.production.createCompoundTask(prod, quantity);
                 } else {
                     alert('Please enter a valid quantity.');
                 }
@@ -186,6 +216,33 @@ window.renderInventoryPage = function (mainContent) {
             quickOrderDiv.appendChild(quantityInput);
             quickOrderDiv.appendChild(orderButton);
             card.appendChild(quickOrderDiv);
+
+            // Max Inventory
+            const maxInvRow = document.createElement('div');
+            maxInvRow.className = 'max-inv-row';
+            const maxInvLabel = document.createElement('label');
+            maxInvLabel.textContent = 'Max Inventory:';
+            const maxInvInput = document.createElement('input');
+            maxInvInput.type = 'number';
+            maxInvInput.value = prod.maxInventory || '0'; // Use existing value or default to 0
+            maxInvInput.min = '0';
+            maxInvInput.step = '1';
+            const updateMaxInvButton = document.createElement('button');
+            updateMaxInvButton.textContent = 'Update';
+            updateMaxInvButton.onclick = () => {
+                const newMaxInv = parseInt(maxInvInput.value);
+                if (!isNaN(newMaxInv)) {
+                    prod.maxInventory = newMaxInv;
+                    console.log(`Max inventory for ${prod.name} updated to ${newMaxInv}`);
+                    window.updateUI('inventory'); // Update the UI to reflect changes
+                } else {
+                    alert('Invalid max inventory entered.');
+                }
+            };
+            maxInvRow.appendChild(maxInvLabel);
+            maxInvRow.appendChild(maxInvInput);
+            maxInvRow.appendChild(updateMaxInvButton);
+            card.appendChild(maxInvRow);
 
             productsGrid.appendChild(card);
         });
@@ -266,127 +323,154 @@ window.renderInventoryPage = function (mainContent) {
     // Add styling
     const style = document.createElement('style');
     style.textContent = `
-.inventory-page-container {
-    padding: 20px;
-    font-family: Arial, sans-serif;
-}
-.filter-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-.tabs-row {
-    margin-bottom: 20px;
-}
-.tab-button {
-    padding: 10px 20px;
-    border: 1px solid #ccc;
-    border-radius: 4px 4px 0 0;
-    background-color: #f0f0f0;
-    cursor: pointer;
-}
-.tab-button.active {
-    background-color: #fff;
-    border-bottom: 1px solid #fff;
-}
-.products-grid, .materials-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
-}
-.product-card, .material-card {
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    padding: 10px;
-    background-color: #fff;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-.title-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-.new-price-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 10px;
-}
-.new-price-row input {
-    width: 80px;
-}
-.product-name {
-    font-weight: bold;
-}
-.info-row {
-    margin-bottom: 10px;
-}
-.buy-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-.buy-qty-input {
-    width: 60px;
-}
-.auto-row {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-.summary-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 20px;
-}
-.purchase-button {
-    padding: 10px 20px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-.purchase-button:hover {
-    background-color: #367c39;
-}
-.set-prices-section {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-// New styles for quick order
-.quick-order-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 10px;
-}
+        .inventory-page-container {
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .filter-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tabs-row {
+            margin-bottom: 20px;
+        }
+        .tab-button {
+            padding: 10px 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px 4px 0 0;
+            background-color: #f0f0f0;
+            cursor: pointer;
+        }
+        .tab-button.active {
+            background-color: #fff;
+            border-bottom: 1px solid #fff;
+        }
+        .products-grid, .materials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .product-card, .material-card {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .new-price-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .new-price-row input {
+            width: 80px;
+        }
+        .product-name {
+            font-weight: bold;
+        }
+        .info-row {
+            margin-bottom: 10px;
+        }
+        .buy-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .buy-qty-input {
+            width: 60px;
+        }
+        .auto-row {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .purchase-button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .purchase-button:hover {
+            background-color: #367c39;
+        }
+        .set-prices-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        // New styles for quick order
+        .quick-order-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
 
 .quick-order-row input {
-    width: 60px;
-    padding: 5px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
+            width: 60px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
 
-.quick-order-row button {
-    padding: 5px 10px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
+        .quick-order-row button {
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
 
-.quick-order-row button:hover {
-    background-color: #367c39;
-}
+        .quick-order-row button:hover {
+            background-color: #367c39;
+        }
+
+        .max-inv-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .max-inv-row input {
+            width: 60px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .max-inv-row button {
+            padding: 5px 10px;
+            background-color: #4CAF50; /* Or any suitable color */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .max-inv-row button:hover {
+            background-color: #367c39; /* Or a darker shade of the button color */
+        }
     `;
     mainContent.appendChild(style);
 };

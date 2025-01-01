@@ -34,6 +34,7 @@ window.taskManager = (function() {
                         window.taskAssignment.unassignTask(task.id);
                         return;
                     }
+                    console.log(`[taskManager.js] Updating compound task ${task.id}, progress: ${task.progress}, totalTime: ${task.totalTime}`);
                 }
                 task.progress += minutes;
                 if (task.progress >= task.totalTime) {
@@ -42,6 +43,8 @@ window.taskManager = (function() {
                 }
             }
         });
+
+        // Auto-assign removed from here since it's now handled in other places (timeEvents.js and after unassignment)
     }
 
     function finalizeTask(task) {
@@ -53,49 +56,37 @@ window.taskManager = (function() {
             window.taskAssignment.unassignTask(task.id);
         }
 
-        if (task.type === 'compound' && task.productId) {
-            const prod = window.productsData.find(p => p.id === task.productId);
-            if (prod) {
-                // Increase the product inventory
-                prod.inventory += task.quantityToMake;
-                console.log(`[finalizeTask] ${task.quantityToMake} units of ${prod.name} added to inventory.`);
-            }
-        }
-        else if (task.type === 'fillPrescription') {
-            const prod = window.productsData.find(p => p.id === task.productId);
-            if (prod) {
-                // Decrease the product inventory since it's taken directly from stock now
-                prod.inventory = Math.max(prod.inventory - task.quantityNeeded, 0);
-                console.log(`[finalizeTask] ${task.quantityNeeded} units of ${prod.name} removed from inventory.`);
-            }
+        // Call production.handleTaskCompletion to update inventory
+        window.production.handleTaskCompletion(task);
+
+        if (task.type === 'fillPrescription') {
             if (task.customerId) {
                 window.prescriptions.prescriptionFilled(task.prescriptionId, task.customerId);
             }
-        }
-        else if (task.type === 'customerInteraction') {
+        } else if (task.type === 'customerInteraction') {
             if (task.customerId) {
                 const customer = window.customers.getCustomerById(task.customerId);
                 if (customer) {
                     if (customer.status === 'waitingForCheckIn') {
                         window.customers.updateCustomerStatus(task.customerId, 'waitingForConsultation');
-                    }
-                    else if (customer.status === 'readyForCheckout') {
+                    } else if (customer.status === 'readyForCheckout') {
                         window.finances.completePrescription(task.customerId, customer.prescriptionId);
                         window.customers.updateCustomerStatus(task.customerId, 'completed');
                         window.customers.customerLeaves(task.customerId);
                     }
                 }
             }
-        }
-        else if (task.type === 'consultation') {
+        } else if (task.type === 'consultation') {
             if (task.customerId) {
                 window.customers.updateCustomerStatus(task.customerId, 'waitingForFill');
             }
         }
+
         // Remove the completed task from the tasks array
         const taskIndex = tasks.findIndex(t => t.id === task.id);
         if (taskIndex > -1) {
             tasks.splice(taskIndex, 1);
+            console.log(`[finalizeTask] Task ${task.id} removed from task list.`);
         }
     }
 
