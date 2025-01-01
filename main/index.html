@@ -59,10 +59,14 @@
     <!-- Script to make 'operationsPage' the default page -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            if (window.showPage) {
-                window.showPage('operations'); // Show operationsPage as the default
-            } else {
-                console.error('window.showPage function not found.');
+            try {
+                if (window.showPage) {
+                    window.showPage('operations'); // Show operationsPage as the default
+                } else {
+                    throw new Error('window.showPage function is not defined.');
+                }
+            } catch (error) {
+                console.error(error.message);
             }
         });
     </script>

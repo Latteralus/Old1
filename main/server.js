@@ -4,6 +4,7 @@ const express = require('express');
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const session = require('express-session');
+const path = require('path');
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use(session({
 // Middleware
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: false })); // For parsing form data
+app.use(express.static(path.join(__dirname, 'public'))); // Serve static files
 
 // Authentication middleware
 function isAuthenticated(req, res, next) {
@@ -40,14 +42,14 @@ function isAuthenticated(req, res, next) {
 // Routes
 app.get('/', (req, res) => {
     if (req.session && req.session.userId) {
-        return res.redirect('/dashboard');
+        return res.redirect('/index.html'); // Redirect to SPA (index.html)
     }
     res.redirect('/login');
 });
 
 app.get('/login', (req, res) => {
     if (req.session && req.session.userId) {
-        return res.redirect('/dashboard');
+        return res.redirect('/index.html'); // Redirect to SPA (index.html) if logged in
     }
     res.render('login', { error: null });
 });
@@ -62,7 +64,7 @@ app.post('/login', async (req, res) => {
         if (user && bcrypt.compareSync(password, user.password_hash)) {
             req.session.userId = user.id;
             req.session.username = user.username;
-            res.redirect('/dashboard');
+            res.redirect('/index.html'); // Redirect to SPA after login
         } else {
             res.render('login', { error: 'Invalid username or password' });
         }
@@ -122,15 +124,11 @@ app.post('/register', async (req, res) => {
     }
 });
 
-app.get('/dashboard', isAuthenticated, (req, res) => {
-    res.render('dashboard', { username: req.session.username });
-});
-
 app.get('/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
             console.error(err);
-            return res.redirect('/dashboard');
+            return res.redirect('/index.html'); // Redirect back to SPA on error
         }
         res.clearCookie('connect.sid');
         res.redirect('/login');
