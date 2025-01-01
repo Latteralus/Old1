@@ -3,14 +3,16 @@ frontend:
   phases:
     preBuild:
       commands:
-        - npm --prefix ./client ci # Install frontend dependencies
+        - npm install -g npm@latest
+        - npm --prefix ./client ci
     build:
       commands:
-        - npm run build --prefix ./client # Build the React app
+        - npm run build --prefix ./client
   artifacts:
     baseDirectory: client/build
     files:
       - '**/*'
   cache:
     paths:
-      - client/node_modules/**/*
+      - client/node_modules/**/* 
+      - client/package-lock.json
