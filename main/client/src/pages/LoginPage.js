@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 
 const LoginPage = ({ onLogin }) => {
   const [username, setUsername] = useState('');
@@ -9,14 +8,23 @@ const LoginPage = ({ onLogin }) => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/api/login', { username, password });
-      if (response.status === 200) {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (response.ok) {
         // Save authentication token or status
         window.sessionStorage.setItem('isAuthenticated', 'true');
         onLogin();
+      } else {
+        setError('Invalid username or password');
       }
     } catch (err) {
-      setError('Invalid username or password');
+      setError('An error occurred. Please try again later.');
     }
   };
 
