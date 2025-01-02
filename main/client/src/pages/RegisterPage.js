@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 
 const RegisterPage = () => {
   const [username, setUsername] = useState('');
@@ -17,16 +16,25 @@ const RegisterPage = () => {
     }
 
     try {
-      const response = await axios.post('/api/register', {
-        username,
-        email,
-        password,
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username,
+          email,
+          password,
+        }),
       });
+
       if (response.status === 201) {
         setSuccess(true);
+      } else {
+        setError('Failed to register. Please try again.');
       }
     } catch (err) {
-      setError('Failed to register. Please try again.');
+      setError('An error occurred. Please try again later.');
     }
   };
 
