@@ -6,16 +6,16 @@ frontend:
         - nvm install 20.17.0          # Install the required Node.js version
         - nvm use 20.17.0              # Use the installed Node.js version
         - npm install -g npm@11.0.0    # Upgrade to the compatible npm version
-        - cd client                    # Navigate to the client directory
+        - cd main/client               # Navigate to the correct client directory
         - npm ci                       # Install dependencies using a clean install
     build:
       commands:
         - npm run build                # Build the React app
   artifacts:
-    baseDirectory: client/build
+    baseDirectory: main/client/build   # Update the base directory to match your file structure
     files:
       - '**/*'
   cache:
     paths:
-      - client/node_modules/**/*       # Cache dependencies
-      - client/package-lock.json       # Cache lock file
+      - main/client/node_modules/**/* # Cache dependencies
+      - main/client/package-lock.json # Cache lock file
