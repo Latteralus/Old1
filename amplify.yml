@@ -3,18 +3,19 @@ frontend:
   phases:
     preBuild:
       commands:
-        - nvm install 20.17.0   # Install the required Node.js version
-        - nvm use 20.17.0       # Use the installed Node.js version
-        - npm install -g npm@11.0.0  # Upgrade to the compatible npm version
-        - npm --prefix ./client ci
+        - nvm install 20.17.0          # Install the required Node.js version
+        - nvm use 20.17.0              # Use the installed Node.js version
+        - npm install -g npm@11.0.0    # Upgrade to the compatible npm version
+        - cd client                    # Navigate to the client directory
+        - npm ci                       # Install dependencies using a clean install
     build:
       commands:
-        - npm run build --prefix ./client
+        - npm run build                # Build the React app
   artifacts:
     baseDirectory: client/build
     files:
       - '**/*'
   cache:
     paths:
-      - client/node_modules/**/* 
-      - client/package-lock.json
+      - client/node_modules/**/*       # Cache dependencies
+      - client/package-lock.json       # Cache lock file
