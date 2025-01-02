@@ -3,7 +3,9 @@ frontend:
   phases:
     preBuild:
       commands:
-        - npm install -g npm@latest
+        - nvm install 20.17.0   # Install the required Node.js version
+        - nvm use 20.17.0       # Use the installed Node.js version
+        - npm install -g npm@11.0.0  # Upgrade to the compatible npm version
         - npm --prefix ./client ci
     build:
       commands:
