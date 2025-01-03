@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Pill } from 'lucide-react';
 
 const LoginPage = ({ onLogin }) => {
   const [username, setUsername] = useState('');
@@ -37,7 +43,9 @@ const LoginPage = ({ onLogin }) => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-6">
-            <Pill className="h-12 w-12 text-blue-600" />
+            <div className="h-12 w-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+              PS
+            </div>
           </div>
           <CardTitle className="text-2xl text-center text-blue-900">Welcome to PharmaSim</CardTitle>
           <CardDescription className="text-center">
