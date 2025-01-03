@@ -1,12 +1,4 @@
 import React, { useState } from 'react';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -40,53 +32,51 @@ const LoginPage = ({ onLogin }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
+      <div className="w-full max-w-md bg-white rounded-lg shadow-md p-6">
+        <div className="space-y-1">
           <div className="flex items-center justify-center mb-6">
             <div className="h-12 w-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
               PS
             </div>
           </div>
-          <CardTitle className="text-2xl text-center text-blue-900">Welcome to PharmaSim</CardTitle>
-          <CardDescription className="text-center">
+          <h1 className="text-2xl text-center text-blue-900">Welcome to PharmaSim</h1>
+          <p className="text-center text-gray-600">
             Your virtual pharmacy management experience
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin}>
-            {error && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Input
-                  type="text"
-                  placeholder="Username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="h-11"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-11"
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full h-11 bg-blue-600 hover:bg-blue-700">
-                Sign In
-              </Button>
+          </p>
+        </div>
+        <form onSubmit={handleLogin} className="mt-6">
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Input
+                type="text"
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="h-11"
+                required
+              />
             </div>
-          </form>
-        </CardContent>
-        <CardFooter className="flex flex-col space-y-4 mt-4">
+            <div className="space-y-2">
+              <Input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="h-11"
+                required
+              />
+            </div>
+            <Button type="submit" className="w-full h-11 bg-blue-600 hover:bg-blue-700">
+              Sign In
+            </Button>
+          </div>
+        </form>
+        <div className="flex flex-col space-y-4 mt-4">
           <div className="text-sm text-center text-gray-600">
             Don't have an account?{' '}
             <a href="/register" className="text-blue-600 hover:text-blue-700 font-medium">
@@ -96,8 +86,8 @@ const LoginPage = ({ onLogin }) => {
           <div className="text-xs text-center text-gray-500">
             Experience the future of pharmacy management training
           </div>
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };
