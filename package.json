@@ -1,0 +1,28 @@
+{
+  "name": "thepharmacy",
+  "version": "1.0.0",
+  "main": "electron-main.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-packager . ThePharmacy --platform=win32 --arch=x64 --out=dist/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Latteralus/ThePharmacy.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Latteralus/ThePharmacy/issues"
+  },
+  "homepage": "https://github.com/Latteralus/ThePharmacy#readme",
+  "description": "Pharmacy management simulation game",
+  "devDependencies": {
+    "electron": "^35.0.0",
+    "electron-packager": "^17.1.1"
+  }
+}
