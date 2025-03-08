@@ -1,82 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PharmaSim</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/gpu-accelerated-animations.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Pharmacy Sim</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #1a237e;
+      color: white;
+    }
+    
+    .container {
+      text-align: center;
+      padding: 2rem;
+      border-radius: 8px;
+      background-color: #283593;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      max-width: 600px;
+    }
+    
+    h1 {
+      margin-bottom: 1.5rem;
+      font-size: 2.5rem;
+    }
+    
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    button {
+      padding: 1rem 2rem;
+      border: none;
+      border-radius: 4px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      background-color: #4051b5;
+      color: white;
+    }
+    
+    button:hover {
+      background-color: #5c6bc0;
+    }
+    
+    button.new-game {
+      background-color: #4caf50;
+    }
+    
+    button.new-game:hover {
+      background-color: #66bb6a;
+    }
+    
+    button.load-game {
+      background-color: #2196f3;
+    }
+    
+    button.load-game:hover {
+      background-color: #42a5f5;
+    }
+    
+    .version {
+      margin-top: 2rem;
+      font-size: 0.8rem;
+      opacity: 0.7;
+    }
+  </style>
 </head>
 <body>
-    <div id="root">
-        <div class="top-bar"></div>
-        <div class="sidebar"></div>
-        <div class="main-content"></div>
+  <div class="container">
+    <h1>The Pharmacy Simulator</h1>
+    
+    <div class="buttons">
+      <button class="new-game" id="newGameBtn">New Game</button>
+      <button class="load-game" id="loadGameBtn">Load Game</button>
+      <button id="settingsBtn">Settings</button>
+      <button id="exitBtn">Exit</button>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <script src="js/data/names.js" defer></script>
-    <script src="js/data/materials.js" defer></script>
-    <script src="js/data/equipment.js" defer></script>
-    <script src="js/data/products.js" defer></script>
-    <script src="js/data/research.js" defer></script>
-    <script src="js/data/insurance.js" defer></script>
-    <script src="js/data/employees.js" defer></script>
-    <script src="js/data/finances.js" defer></script>
-    <script src="js/data/helpers.js" defer></script>
-
-    <script src="js/taskManager.js" defer></script>
-    <script src="js/taskAssignment.js" defer></script>
-    <script src="js/prescriptions.js" defer></script>
-    <script src="js/customers.js" defer></script>
-    <script src="js/insuranceClaims.js" defer></script>
-    <script src="js/brandReputation.js" defer></script>
-    <script src="js/production.js" defer></script>
-    <script src="js/timeEvents.js" defer></script>
-
-    <script src="js/ui.js" defer></script>
-
-    <script src="components/panel.js" defer></script>
-    <script src="components/topBar.js" defer></script>
-    <script src="components/sidebar.js" defer></script>
-
-    <script src="js/pages/dashboardPage.js" defer></script>
-    <script src="js/pages/ordersPage.js" defer></script>
-    <script src="js/pages/inventoryPage.js" defer></script>
-    <script src="js/pages/financesPage.js" defer></script>
-    <script src="js/pages/employeesPage.js" defer></script>
-    <script src="js/pages/marketplacePage.js" defer></script>
-    <script src="js/pages/customersPage.js" defer></script>
-    <script src="js/pages/marketingPage.js" defer></script>
-    <script src="js/pages/researchPage.js" defer></script>
-    <script src="js/pages/statisticsPage.js" defer></script>
-    <script src="js/pages/operationsPage.js" defer></script>
-    <script src="js/pages/equipmentPage.js" defer></script>
-    <script src="js/pages/settingsPage.js" defer></script>
-
-    <script src="modals/modal.js" defer></script>
     
-    <!-- Enhanced task bars script -->
-    <script src="js/taskbars.js" defer></script>
+    <div class="version">
+      Version 1.0.0
+    </div>
+  </div>
+
+  <script>
+    // Button event handlers
+    document.getElementById('newGameBtn').addEventListener('click', () => {
+      window.location.href = 'main.html?mode=new';
+    });
     
-    <!-- Task error recovery system -->
-    <script src="js/task-error-recovery.js" defer></script>
-
-    <script src="js/main.js" defer></script>
-
-    <!-- Script to make 'operationsPage' the default page -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            try {
-                if (window.showPage) {
-                    window.showPage('operations'); // Show operationsPage as the default
-                } else {
-                    throw new Error('window.showPage function is not defined.');
-                }
-            } catch (error) {
-                console.error(error.message);
-            }
-        });
-    </script>
+    document.getElementById('loadGameBtn').addEventListener('click', () => {
+      window.location.href = 'main.html?mode=load';
+    });
+    
+    document.getElementById('settingsBtn').addEventListener('click', () => {
+      window.location.href = 'settings.html';
+    });
+    
+    document.getElementById('exitBtn').addEventListener('click', () => {
+      // Send message to main process to quit the app
+      if (window.gameAPI) {
+        window.gameAPI.quit();
+      }
+    });
+  </script>
 </body>
 </html>
