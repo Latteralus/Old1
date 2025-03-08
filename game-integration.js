@@ -1,10 +1,14 @@
 // game-integration.js
-const { ipcMain } = require('electron');
+const log = require('electron-log');
+
+// Then replace console.log calls with log.info, console.error with log.error, etc.
+const { ipcMain, app } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
 // Game state management
 let gameState = null;
+let newGameOptions = null;
 
 // Initialize game integration
 function initGameIntegration(mainWindow) {
@@ -17,23 +21,125 @@ function initGameIntegration(mainWindow) {
 
 // Set up IPC listeners to handle game-related events
 function setupIpcListeners(mainWindow) {
-  // Handle save game requests
-  ipcMain.on('save-game', (event, gameData) => {
-    saveGameState(gameData);
-    event.reply('save-game-response', { success: true });
+  // Handle save game requests - using handle instead of on for invoke compatibility
+  ipcMain.handle('save-game', async (event, gameData) => {
+    const success = saveGameState(gameData);
+    return { success };
   });
   
-  // Handle load game requests
-  ipcMain.on('load-game', (event) => {
-    const gameData = loadGameState();
-    event.reply('load-game-response', gameData);
+  // Handle load game requests - using handle instead of on for invoke compatibility
+  ipcMain.handle('load-game', async () => {
+    return loadGameState();
   });
 
-  // Handle game settings changes
-  ipcMain.on('update-settings', (event, settings) => {
-    // Update settings in storage
-    saveSettings(settings);
-    event.reply('update-settings-response', { success: true });
+  // Handle game settings changes - using handle instead of on for invoke compatibility
+  ipcMain.handle('update-settings', async (event, settings) => {
+    const success = saveSettings(settings);
+    return { success };
+  });
+  
+  // Handle get settings request
+  ipcMain.handle('get-settings', async () => {
+    return loadSettings();
+  });
+  
+  // Handle the file read operation
+  ipcMain.handle('read-file', async (event, filePath, options) => {
+    try {
+      log.info(`Reading file: ${filePath}`);
+      const content = await fs.promises.readFile(filePath, options);
+      return content;
+    } catch (error) {
+      log.error(`Error reading file ${filePath}:`, error);
+      throw error;
+    }
+  });
+  
+  // Handle file write operation
+  ipcMain.handle('write-file', async (event, filePath, data, options) => {
+    try {
+      await fs.promises.writeFile(filePath, data, options);
+      return true;
+    } catch (error) {
+      log.error(`Error writing file ${filePath}:`, error);
+      throw error;
+    }
+  });
+  
+  // Handle get saved games list
+  ipcMain.handle('get-saved-games', async () => {
+    try {
+      const userDataPath = getUserDataPath();
+      const savePath = path.join(userDataPath, 'saves');
+      
+      if (!fs.existsSync(savePath)) {
+        return [];
+      }
+      
+      const files = fs.readdirSync(savePath);
+      const saveFiles = files.filter(file => file.endsWith('.json'));
+      
+      const savedGames = saveFiles.map(file => {
+        try {
+          const filePath = path.join(savePath, file);
+          const data = fs.readFileSync(filePath, 'utf8');
+          const saveData = JSON.parse(data);
+          return {
+            name: file,
+            path: filePath,
+            lastSaved: saveData.timestamp || null,
+            pharmacyName: saveData.gameState?.pharmacyName || 'Unnamed Pharmacy',
+            difficulty: saveData.gameState?.difficulty || 'normal',
+            cash: saveData.financesData?.cash || 0
+          };
+        } catch (err) {
+          log.error(`Error reading save file ${file}:`, err);
+          return null;
+        }
+      }).filter(Boolean);
+      
+      return savedGames;
+    } catch (error) {
+      log.error('Error getting saved games:', error);
+      return [];
+    }
+  });
+  
+  // Handle delete saved game
+  ipcMain.handle('delete-saved-game', async (event, index) => {
+    try {
+      const savedGames = await module.exports.getSavedGames();
+      if (savedGames && savedGames[index]) {
+        fs.unlinkSync(savedGames[index].path);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      log.error('Error deleting saved game:', error);
+      return false;
+    }
+  });
+  
+  // Handle start new game
+  ipcMain.handle('start-new-game', async (event, gameData) => {
+    try {
+      newGameOptions = gameData;
+      log.info('Stored new game options:', newGameOptions);
+      return true;
+    } catch (error) {
+      log.error('Error storing new game options:', error);
+      return false;
+    }
+  });
+  
+  // Handle get new game options
+  ipcMain.handle('get-new-game-options', async () => {
+    return newGameOptions;
+  });
+
+  // Log error from renderer
+  ipcMain.on('log-error', (event, error) => {
+    log.error('Error from renderer process:', error);
   });
 }
 
@@ -54,10 +160,10 @@ function saveGameState(gameData) {
       JSON.stringify(gameData, null, 2)
     );
     
-    console.log('Game saved successfully');
+    log.info('Game saved successfully');
     return true;
   } catch (error) {
-    console.error('Error saving game:', error);
+    log.error('Error saving game:', error);
     return false;
   }
 }
@@ -72,14 +178,14 @@ function loadGameState() {
     if (fs.existsSync(savePath)) {
       const saveData = fs.readFileSync(savePath, 'utf8');
       gameState = JSON.parse(saveData);
-      console.log('Game loaded successfully');
+      log.info('Game loaded successfully');
       return gameState;
     } else {
-      console.log('No save file found, starting new game');
+      log.info('No save file found, starting new game');
       return null;
     }
   } catch (error) {
-    console.error('Error loading game:', error);
+    log.error('Error loading game:', error);
     return null;
   }
 }
@@ -91,10 +197,10 @@ function saveSettings(settings) {
     const settingsPath = path.join(userDataPath, 'settings.json');
     
     fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
-    console.log('Settings saved successfully');
+    log.info('Settings saved successfully');
     return true;
   } catch (error) {
-    console.error('Error saving settings:', error);
+    log.error('Error saving settings:', error);
     return false;
   }
 }
@@ -118,14 +224,52 @@ function loadSettings() {
       };
     }
   } catch (error) {
-    console.error('Error loading settings:', error);
+    log.error('Error loading settings:', error);
     return null;
+  }
+}
+
+// Get saved games list
+function getSavedGames() {
+  try {
+    const userDataPath = getUserDataPath();
+    const savePath = path.join(userDataPath, 'saves');
+    
+    if (!fs.existsSync(savePath)) {
+      return [];
+    }
+    
+    const files = fs.readdirSync(savePath);
+    const saveFiles = files.filter(file => file.endsWith('.json'));
+    
+    const savedGames = saveFiles.map(file => {
+      try {
+        const filePath = path.join(savePath, file);
+        const data = fs.readFileSync(filePath, 'utf8');
+        const saveData = JSON.parse(data);
+        return {
+          name: file,
+          path: filePath,
+          lastSaved: saveData.timestamp || null,
+          pharmacyName: saveData.gameState?.pharmacyName || 'Unnamed Pharmacy',
+          difficulty: saveData.gameState?.difficulty || 'normal',
+          cash: saveData.financesData?.cash || 0
+        };
+      } catch (err) {
+        log.error(`Error reading save file ${file}:`, err);
+        return null;
+      }
+    }).filter(Boolean);
+    
+    return savedGames;
+  } catch (error) {
+    log.error('Error getting saved games:', error);
+    return [];
   }
 }
 
 // Helper to get user data path
 function getUserDataPath() {
-  const { app } = require('electron');
   return app.getPath('userData');
 }
 
@@ -134,5 +278,6 @@ module.exports = {
   saveGameState,
   loadGameState,
   saveSettings,
-  loadSettings
+  loadSettings,
+  getSavedGames
 };
