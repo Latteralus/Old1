@@ -1,9 +1,12 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, dialog } = require('electron');
 const path = require('path');
+const { autoUpdater } = require('electron-updater');
+
+let mainWindow;
 
 // Create the browser window.
 function createWindow() {
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
     webPreferences: {
@@ -26,12 +29,41 @@ app.whenReady().then(() => {
   createWindow();
 
   app.on('activate', function () {
-    // On macOS it's common to re-create a window when the dock icon is clicked
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
+
+  // Check for updates after the app is ready
+  checkForUpdates();
 });
 
 // Quit when all windows are closed, except on macOS.
 app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit();
+});
+
+// Function to check for updates
+function checkForUpdates() {
+  autoUpdater.checkForUpdatesAndNotify();
+}
+
+// Event listeners for auto-updater
+autoUpdater.on('update-available', (info) => {
+  dialog.showMessageBox({
+    type: 'info',
+    title: 'Update Available',
+    message: `A new version (${info.version}) is available. Downloading now...`,
+  });
+});
+
+autoUpdater.on('update-downloaded', () => {
+  dialog.showMessageBox({
+    type: 'info',
+    title: 'Update Ready',
+    message: 'The update has been downloaded. Restart the application to apply the update.',
+    buttons: ['Restart Now', 'Later'],
+  }).then((result) => {
+    if (result.response === 0) {
+      autoUpdater.quitAndInstall();
+    }
+  });
 });
