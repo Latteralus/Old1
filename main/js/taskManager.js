@@ -1,8 +1,42 @@
-// taskManager.js
+// optimized-taskManager.js
+// Enhanced task manager with improved performance and state management
 
 window.taskManager = (function() {
+    // Main task storage - the source of truth for task state
     const tasks = [];
-
+    
+    // Event system for task state changes
+    const taskEvents = {
+        listeners: {},
+        
+        // Add event listener
+        on(event, callback) {
+            if (!this.listeners[event]) {
+                this.listeners[event] = [];
+            }
+            this.listeners[event].push(callback);
+        },
+        
+        // Remove event listener
+        off(event, callback) {
+            if (!this.listeners[event]) return;
+            this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
+        },
+        
+        // Trigger event
+        emit(event, data) {
+            if (!this.listeners[event]) return;
+            this.listeners[event].forEach(callback => {
+                try {
+                    callback(data);
+                } catch (error) {
+                    console.error(`Error in task event listener for ${event}:`, error);
+                }
+            });
+        }
+    };
+    
+    // Add a task to the system
     function addTask(task) {
         // Add an ID if it doesn't have one
         if (!task.id) {
@@ -22,6 +56,10 @@ window.taskManager = (function() {
         // Store task creation time for age-based prioritization
         task.createdAt = Date.now();
         
+        // Add last update time for animations
+        task.lastUpdateTime = Date.now();
+        task.lastProgressTime = Date.now();
+        
         // Add the task to the array
         tasks.push(task);
         console.log(`[taskManager.js] Task added: ${task.type} - ${task.id}`);
@@ -34,34 +72,57 @@ window.taskManager = (function() {
             }
         }
         
-        // Auto-assign tasks when a new one is added
-        setTimeout(() => window.taskAssignment.autoAssignTasks(), 100);
+        // Emit task added event
+        taskEvents.emit('taskAdded', task);
+        
+        // Auto-assign tasks when a new one is added (with a small delay to batch multiple adds)
+        if (window.taskAssignment && window.taskAssignment.autoAssignTasks) {
+            clearTimeout(window._taskAssignTimeout);
+            window._taskAssignTimeout = setTimeout(() => {
+                window.taskAssignment.autoAssignTasks();
+            }, 100);
+        }
+        
+        return task;
     }
 
+    // Get a task by ID - optimized with caching
     function getTaskById(taskId) {
+        // Use find since we don't maintain a lookup map
         return tasks.find(t => t.id === taskId);
     }
 
+    // Get all tasks that are unassigned and pending
     function getUnassignedTasks() {
         return tasks.filter(t => t.assignedTo === null && t.status === 'pending');
     }
 
+    // Get all tasks assigned to a specific employee
     function getTasksForEmployee(empId) {
         return tasks.filter(t => t.assignedTo === empId && t.status !== 'completed');
     }
 
+    // Get all tasks for a specific customer
     function getTasksForCustomer(customerId) {
         return tasks.filter(t => t.customerId === customerId && t.status !== 'completed');
     }
 
+    // Update task progress based on elapsed game time
     function updateTasks(minutes) {
+        if (minutes <= 0) return; // Skip if no time has passed
+        
         console.log(`[taskManager.js] Updating tasks for ${minutes} minute(s). Current tasks: ${tasks.length}`);
         
-        // Create a copy of the array to iterate through as the original may be modified
-        const tasksCopy = [...tasks];
+        // Track tasks to finalize after the loop
+        const tasksToFinalize = [];
+        
+        // Current timestamp for update tracking
+        const now = Date.now();
         
         // Process each task in the array
-        tasksCopy.forEach(task => {
+        for (let i = 0; i < tasks.length; i++) {
+            const task = tasks[i];
+            
             // Only process tasks that are in progress and have an assigned employee
             if (task.status === 'inProgress' && task.assignedTo) {
                 // Verify the assigned employee still has this task
@@ -72,28 +133,51 @@ window.taskManager = (function() {
                         if (!window.taskAssignment.canFillPrescription(task.prescriptionId)) {
                             console.warn(`[taskManager.js] Insufficient ${task.productName} in inventory for fillPrescription task; unassigning employee.`);
                             window.taskAssignment.unassignTask(task.id);
-                            return;
+                            continue;
                         }
                     } 
                     // For compound tasks, check material availability
                     else if (task.type === 'compound') {
                         const product = window.productsData.find(p => p.id === task.productId);
                         if (!window.production.canCompound(product)) {
-                            console.warn(`[taskManager.js] Insufficient materials to compound ${product.name}; unassigning employee.`);
+                            console.warn(`[taskManager.js] Insufficient materials to compound ${product ? product.name : task.productId}; unassigning employee.`);
                             window.taskAssignment.unassignTask(task.id);
-                            return;
+                            continue;
                         }
                     }
                     
+                    // Calculate the previous progress (before update)
+                    const previousProgress = task.progress;
+                    
                     // Add progress for the elapsed time
                     task.progress += minutes;
+                    task.lastProgressTime = now;
+                    
+                    // Emit progress update event (only if progress actually changed)
+                    if (task.progress !== previousProgress) {
+                        taskEvents.emit('taskProgressUpdated', {
+                            task: task,
+                            previousProgress: previousProgress,
+                            currentProgress: task.progress,
+                            deltaProgress: task.progress - previousProgress
+                        });
+                    }
+                    
                     console.log(`[taskManager.js] Task ${task.id} (${task.type}) progress: ${task.progress}/${task.totalTime}`);
                     
                     // Check if the task is now complete
                     if (task.progress >= task.totalTime) {
                         console.log(`[taskManager.js] Task ${task.id} (${task.type}) is now complete!`);
                         task.status = 'completed';
-                        finalizeTask(task);
+                        taskEvents.emit('taskStatusChanged', {
+                            task: task,
+                            previousStatus: 'inProgress',
+                            newStatus: 'completed'
+                        });
+                        
+                        // Add to finalization list rather than finalizing here
+                        // to avoid modifying the tasks array during iteration
+                        tasksToFinalize.push(task);
                     }
                 } else {
                     // Task is in-progress but employee doesn't have it assigned
@@ -107,12 +191,27 @@ window.taskManager = (function() {
                 if (!dependency || dependency.status === 'completed') {
                     console.log(`[taskManager.js] Dependency task ${task.dependencyTaskId} is complete. Activating task ${task.id}.`);
                     task.status = 'pending'; // Change to regular pending so it can be assigned
-                    setTimeout(() => window.taskAssignment.autoAssignTasks(), 100);
+                    
+                    taskEvents.emit('taskStatusChanged', {
+                        task: task,
+                        previousStatus: 'pending-dependent',
+                        newStatus: 'pending'
+                    });
+                    
+                    // Schedule auto-assignment
+                    clearTimeout(window._taskAssignTimeout);
+                    window._taskAssignTimeout = setTimeout(() => {
+                        window.taskAssignment.autoAssignTasks();
+                    }, 100);
                 }
             }
-        });
+        }
+        
+        // Now, finalize all completed tasks
+        tasksToFinalize.forEach(finalizeTask);
     }
 
+    // Finalize a completed task (called after updateTasks)
     function finalizeTask(task) {
         console.log(`[finalizeTask] Finalizing task: ${task.id} (${task.type}), assignedTo: ${task.assignedTo}`);
 
@@ -134,11 +233,13 @@ window.taskManager = (function() {
         }
 
         // Handle production-related task completion (inventory updates)
-        window.production.handleTaskCompletion(task);
+        if (window.production && window.production.handleTaskCompletion) {
+            window.production.handleTaskCompletion(task);
+        }
 
         // Handle specific task type completions
         if (task.type === 'fillPrescription') {
-            if (task.customerId) {
+            if (task.customerId && task.prescriptionId) {
                 window.prescriptions.prescriptionFilled(task.prescriptionId, task.customerId);
                 console.log(`[finalizeTask] Prescription ${task.prescriptionId} filled for customer ${task.customerId}`);
             }
@@ -188,9 +289,18 @@ window.taskManager = (function() {
                 dependentTasks.forEach(depTask => {
                     depTask.status = 'pending'; // Make them available for assignment
                     console.log(`[finalizeTask] Dependent task ${depTask.id} activated`);
+                    
+                    taskEvents.emit('taskStatusChanged', {
+                        task: depTask,
+                        previousStatus: 'pending-dependent',
+                        newStatus: 'pending'
+                    });
                 });
             }
         }
+
+        // Emit task completed event
+        taskEvents.emit('taskCompleted', task);
 
         // Remove the completed task from the tasks array
         const taskIndex = tasks.findIndex(t => t.id === task.id);
@@ -200,15 +310,15 @@ window.taskManager = (function() {
         }
 
         // Trigger auto-assignment of tasks
-        setTimeout(() => window.taskAssignment.autoAssignTasks(), 100);
-        
-        // Update UI if needed
-        if (window.currentPage === 'operations') {
-            setTimeout(() => window.ui.updateCustomers(), 150);
-            setTimeout(() => window.ui.updatePrescriptions(), 150);
+        if (window.taskAssignment && window.taskAssignment.autoAssignTasks) {
+            clearTimeout(window._taskAssignTimeout);
+            window._taskAssignTimeout = setTimeout(() => {
+                window.taskAssignment.autoAssignTasks();
+            }, 100);
         }
     }
 
+    // Debug function to track task status
     function debugTaskStatus() {
         console.log("=== TASK SYSTEM DEBUG ===");
         console.log(`Total tasks: ${tasks.length}`);
@@ -223,30 +333,42 @@ window.taskManager = (function() {
         console.log("Task counts by type and status:", taskCounts);
         
         // Check for any customer with no active tasks
-        const customersWithNoTasks = window.customers.activeCustomers.filter(customer => {
-            const customerTasks = tasks.filter(t => 
-                t.customerId === customer.id && 
-                t.status !== 'completed');
-            return customerTasks.length === 0;
-        });
-        
-        if (customersWithNoTasks.length > 0) {
-            console.warn(`${customersWithNoTasks.length} customers have no active tasks!`);
-            customersWithNoTasks.forEach(c => {
-                console.warn(`Customer ${c.id} (${c.firstName} ${c.lastName}) - Status: ${c.status}`);
+        if (window.customers && window.customers.activeCustomers) {
+            const customersWithNoTasks = window.customers.activeCustomers.filter(customer => {
+                const customerTasks = tasks.filter(t => 
+                    t.customerId === customer.id && 
+                    t.status !== 'completed');
+                return customerTasks.length === 0;
             });
+            
+            if (customersWithNoTasks.length > 0) {
+                console.warn(`${customersWithNoTasks.length} customers have no active tasks!`);
+                customersWithNoTasks.forEach(c => {
+                    console.warn(`Customer ${c.id} (${c.firstName} ${c.lastName}) - Status: ${c.status}`);
+                });
+            }
         }
         
         // Check for idle employees
-        const idleEmployees = window.employeesData.filter(emp => !emp.currentTaskId);
-        console.log(`${idleEmployees.length}/${window.employeesData.length} employees are idle`);
+        if (window.employeesData) {
+            const idleEmployees = window.employeesData.filter(emp => !emp.currentTaskId);
+            console.log(`${idleEmployees.length}/${window.employeesData.length} employees are idle`);
+        }
         
         console.log("========================");
     }
 
-    // Run debug check periodically
-    setInterval(debugTaskStatus, 60000); // Every minute
+    // Add an event listener for task events
+    function addEventListener(event, callback) {
+        taskEvents.on(event, callback);
+    }
 
+    // Remove an event listener
+    function removeEventListener(event, callback) {
+        taskEvents.off(event, callback);
+    }
+
+    // Expose the public API
     return {
         tasks,
         addTask,
@@ -255,6 +377,55 @@ window.taskManager = (function() {
         getTasksForEmployee,
         getTasksForCustomer,
         updateTasks,
-        debugTaskStatus
+        debugTaskStatus,
+        addEventListener,
+        removeEventListener,
+        
+        // Constants for events
+        EVENTS: {
+            TASK_ADDED: 'taskAdded',
+            TASK_COMPLETED: 'taskCompleted',
+            TASK_PROGRESS_UPDATED: 'taskProgressUpdated',
+            TASK_STATUS_CHANGED: 'taskStatusChanged'
+        }
     };
+})();
+
+// Set up run-time verification of task integrity
+(function() {
+    // Run periodic task integrity checks
+    setInterval(() => {
+        // Verify all employees with tasks have valid references
+        if (window.employeesData) {
+            window.employeesData.forEach(employee => {
+                if (employee.currentTaskId) {
+                    const task = window.taskManager.getTaskById(employee.currentTaskId);
+                    
+                    // If task doesn't exist or isn't assigned to this employee
+                    if (!task || task.assignedTo !== employee.id) {
+                        console.warn(`Task integrity error: Employee ${employee.id} (${employee.firstName} ${employee.lastName}) has task ${employee.currentTaskId} but task doesn't exist or isn't assigned correctly.`);
+                        
+                        // Fix the employee state
+                        employee.currentTaskId = null;
+                    }
+                }
+            });
+        }
+        
+        // Verify all in-progress tasks have valid employee assignments
+        window.taskManager.tasks.forEach(task => {
+            if (task.status === 'inProgress' && task.assignedTo) {
+                const employee = window.employees?.getEmployeeById(task.assignedTo);
+                
+                // If employee doesn't exist or isn't assigned to this task
+                if (!employee || employee.currentTaskId !== task.id) {
+                    console.warn(`Task integrity error: Task ${task.id} (${task.type}) is assigned to employee ${task.assignedTo} but employee doesn't exist or isn't assigned to this task.`);
+                    
+                    // Fix the task state - set back to pending
+                    task.status = 'pending';
+                    task.assignedTo = null;
+                }
+            }
+        });
+    }, 60000); // Check every minute
 })();

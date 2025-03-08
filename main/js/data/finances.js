@@ -63,7 +63,7 @@ window.finances = {
         // 1) Sum employee daily wages
         let totalWages = 0;
         window.employeesData.forEach(emp => {
-            const dailyPay = emp.salary / 30;
+            const dailyPay = emp.salary / 365;
             totalWages += dailyPay;
 
             // Add wage transaction

@@ -1,8 +1,8 @@
-// enhanced-task-bars.js
-// This script enhances task progress bars with client-side updates and improved visuals
+// optimized-taskbars.js
+// Enhanced progress bars with smooth animations using requestAnimationFrame
 
 (function() {
-    // Task type colors - customize these as needed
+    // Task type colors - customize as needed
     const taskTypeColors = {
         'fillPrescription': '#4caf50', // Green
         'customerInteraction': '#2196f3', // Blue
@@ -12,96 +12,167 @@
         'default': '#607d8b' // Gray (fallback)
     };
 
-    // Store tasks and their progress for client-side calculation
-    let activeTasksCache = [];
+    // Store tasks with their progress state for interpolation
+    const progressTracker = new Map();
     
-    // Initialize task progress bars enhancement
+    // Timestamps to track when tasks were last updated
+    let lastSystemUpdate = 0;
+
+    // Initialize enhanced task progress bars
     function initEnhancedTaskBars() {
-        console.log("[enhanced-task-bars] Initializing enhanced progress bars");
+        console.log("[enhanced-taskbars] Initializing enhanced progress bars");
         
         // Add necessary CSS to the page
         addTaskBarStyles();
         
-        // First load the tasks
+        // Perform initial progress bar setup
         updateTaskProgressBars();
         
-        // Set interval for client-side progress updates
-        setInterval(clientSideProgressUpdate, 1000); // Update every second
+        // Expose the update function globally so it can be called from the main render loop
+        window.updateTaskProgressBars = smoothUpdateTaskProgressBars;
         
-        // Actual data refresh from server at longer intervals
-        setInterval(updateTaskProgressBars, 5000); // Fetch actual data every 5 seconds
+        // Set current time as base for interpolation
+        lastSystemUpdate = performance.now();
     }
     
-    // Update progress UI without fetching new data
-    function clientSideProgressUpdate() {
-        activeTasksCache.forEach(task => {
-            if (task.status === 'inProgress') {
-                // Estimate new progress based on time elapsed
-                const now = Date.now();
-                const elapsed = (now - task.lastUpdated) / 1000; // Seconds since last update
+    // Update function called by the main render loop (every frame)
+    function smoothUpdateTaskProgressBars() {
+        // The current timestamp for interpolation
+        const now = performance.now();
+        
+        // Calculate time since last system update (for interpolation)
+        const timeSinceLastUpdate = now - lastSystemUpdate;
+        
+        // Find all task progress bars in the DOM
+        const progressBars = document.querySelectorAll('.task-progress-bar');
+        
+        progressBars.forEach(progressBar => {
+            const taskId = progressBar.dataset.taskId;
+            if (!taskId) return;
+            
+            // Get the task from the global task manager
+            const task = window.taskManager?.tasks?.find(t => t.id === taskId);
+            
+            // If task exists and is in progress, update its visual progress
+            if (task && task.status === 'inProgress') {
+                // Get tracked state or create new entry
+                if (!progressTracker.has(taskId)) {
+                    progressTracker.set(taskId, {
+                        lastProgress: task.progress,
+                        lastUpdate: now,
+                        velocity: task.totalTime > 0 ? 1 / task.totalTime : 0, // Units per minute
+                        totalTime: task.totalTime
+                    });
+                }
                 
-                // Calculate how much progress should have increased
-                // Progress increases at the rate of totalTime / 60 per second
-                const progressRate = task.totalTime / task.totalTime; // Progress units per second
-                const estimatedProgress = Math.min(task.totalTime, task.progress + (elapsed * progressRate));
+                const trackedState = progressTracker.get(taskId);
                 
-                // Update the progress bar
-                const progressBar = document.querySelector(`.task-progress-bar[data-task-id="${task.id}"]`);
-                if (progressBar) {
-                    const fillElement = progressBar.querySelector('.progress-fill');
-                    const percentElement = progressBar.querySelector('.progress-percent');
+                // Calculate interpolated progress
+                // We know the rate of progress (velocity) so we can predict where it should be now
+                const elapsedMinutes = timeSinceLastUpdate / 60000; // Convert ms to minutes
+                const predictedProgress = Math.min(
+                    task.totalTime, 
+                    task.progress + (elapsedMinutes * trackedState.velocity)
+                );
+                
+                // Update the visual elements
+                updateProgressBarUI(progressBar, predictedProgress, task);
+            } 
+            // If task is complete or no longer exists, remove from tracker
+            else if (!task || task.status !== 'inProgress') {
+                progressTracker.delete(taskId);
+                
+                // If task is complete, set to 100%
+                if (task && task.status === 'completed') {
+                    const progressFill = progressBar.querySelector('.progress-fill');
+                    const progressPercent = progressBar.querySelector('.progress-percent');
                     
-                    // Calculate percentage
-                    const percent = Math.min(100, Math.round((estimatedProgress / task.totalTime) * 100));
-                    
-                    // Update fill width
-                    if (fillElement) {
-                        fillElement.style.width = `${percent}%`;
-                    }
-                    
-                    // Update percentage text
-                    if (percentElement) {
-                        percentElement.textContent = `${percent}%`;
-                    }
-                    
-                    // Update time remaining
-                    const timeElement = progressBar.querySelector('.time-remaining');
-                    if (timeElement) {
-                        const remainingTime = Math.max(0, task.totalTime - estimatedProgress);
-                        const minutes = Math.floor(remainingTime);
-                        const seconds = Math.floor((remainingTime - minutes) * 60);
-                        timeElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')} remaining`;
-                    }
-                    
-                    // Store the estimated progress for next calculation
-                    task.clientProgress = estimatedProgress;
+                    if (progressFill) progressFill.style.width = '100%';
+                    if (progressPercent) progressPercent.textContent = '100%';
                 }
             }
         });
     }
     
-    // Fetch tasks and update the progress bars
-    function updateTaskProgressBars() {
-        // Get all currently active tasks
-        if (!window.taskManager || !window.taskManager.tasks) {
-            return; // Skip if tasks not available yet
+    // Update the actual progress bar UI elements with the current progress
+    function updateProgressBarUI(progressBar, currentProgress, task) {
+        // Get the elements
+        const progressFill = progressBar.querySelector('.progress-fill');
+        const progressPercent = progressBar.querySelector('.progress-percent');
+        const timeRemaining = progressBar.querySelector('.time-remaining');
+        
+        // Calculate percentage and apply color based on task type
+        const percent = Math.min(100, Math.max(0, Math.round((currentProgress / task.totalTime) * 100)));
+        const color = taskTypeColors[task.type] || taskTypeColors.default;
+        
+        // Update fill width with CSS transition applied in the CSS
+        if (progressFill) {
+            progressFill.style.width = `${percent}%`;
+            progressFill.style.backgroundColor = color;
         }
         
+        // Update percentage text
+        if (progressPercent) {
+            progressPercent.textContent = `${percent}%`;
+        }
+        
+        // Update time remaining
+        if (timeRemaining) {
+            const remainingTime = Math.max(0, task.totalTime - currentProgress);
+            const minutes = Math.floor(remainingTime);
+            const seconds = Math.floor((remainingTime - minutes) * 60);
+            timeRemaining.textContent = `${minutes}:${seconds.toString().padStart(2, '0')} remaining`;
+        }
+    }
+    
+    // Recreates all task progress bars when the task data changes
+    // This is called less frequently, typically when task status changes
+    function updateTaskProgressBars() {
+        // Update timestamp for interpolation base
+        lastSystemUpdate = performance.now();
+        
+        // Only proceed if the task manager exists and has tasks
+        if (!window.taskManager || !window.taskManager.tasks) {
+            return;
+        }
+        
+        // Get tasks in progress
         const activeTasks = window.taskManager.tasks.filter(t => 
             t.status === 'inProgress' && t.assignedTo
         );
         
-        // Update our local cache with the current state
-        activeTasksCache = activeTasks.map(task => ({
-            ...task,
-            lastUpdated: Date.now(),
-            clientProgress: task.progress // Initialize client-side progress tracker
-        }));
+        // Update our progress tracker with the latest real data
+        activeTasks.forEach(task => {
+            if (progressTracker.has(task.id)) {
+                const trackedState = progressTracker.get(task.id);
+                
+                // Update the tracker with the latest actual progress
+                trackedState.lastProgress = task.progress;
+                trackedState.lastUpdate = lastSystemUpdate;
+                trackedState.totalTime = task.totalTime;
+                trackedState.velocity = task.totalTime > 0 ? 1 / task.totalTime : 0;
+            } else {
+                // Create new tracker entry
+                progressTracker.set(task.id, {
+                    lastProgress: task.progress,
+                    lastUpdate: lastSystemUpdate,
+                    velocity: task.totalTime > 0 ? 1 / task.totalTime : 0,
+                    totalTime: task.totalTime
+                });
+            }
+        });
         
-        // Get all employee task displays
+        // Clean up tracked tasks that are no longer active
+        for (const taskId of progressTracker.keys()) {
+            if (!activeTasks.some(t => t.id === taskId)) {
+                progressTracker.delete(taskId);
+            }
+        }
+        
+        // Update employee task displays
         updateEmployeeTaskDisplays();
         
-        // Get all standalone task displays if there are any
+        // Update standalone task displays
         updateStandaloneTaskDisplays();
     }
     
@@ -110,7 +181,13 @@
         const employeeTaskElements = document.querySelectorAll('.employee-card .task-section, .task-info');
         
         employeeTaskElements.forEach(taskElement => {
-            const employeeId = taskElement.closest('[data-employee-id]')?.dataset.employeeId;
+            const employeeCard = taskElement.closest('[data-employee-id], .employee-card');
+            if (!employeeCard) return;
+            
+            const employeeId = employeeCard.dataset?.employeeId || 
+                               employeeCard.querySelector('.employee-id')?.textContent || 
+                               getEmployeeIdFromContext(employeeCard);
+            
             if (!employeeId) return;
             
             const employee = window.employeesData.find(e => e.id === employeeId);
@@ -124,12 +201,31 @@
         });
     }
     
+    // Extract employee ID from surrounding context if not explicitly marked
+    function getEmployeeIdFromContext(element) {
+        // Try to find by name match
+        const nameElement = element.querySelector('h3, .employee-name, strong');
+        if (nameElement) {
+            const nameText = nameElement.textContent;
+            
+            // Find employee by full name match
+            for (const emp of window.employeesData) {
+                const fullName = `${emp.firstName} ${emp.lastName}`;
+                if (nameText.includes(fullName)) {
+                    return emp.id;
+                }
+            }
+        }
+        
+        return null;
+    }
+    
     // Update standalone task displays
     function updateStandaloneTaskDisplays() {
-        const taskEntries = document.querySelectorAll('.task-entry');
+        const taskEntries = document.querySelectorAll('.task-entry, [class*="task-item"]');
         
         taskEntries.forEach(taskEntry => {
-            const taskId = taskEntry.dataset.taskId;
+            const taskId = taskEntry.dataset?.taskId || getTaskIdFromContext(taskEntry);
             if (!taskId) return;
             
             const task = window.taskManager.tasks.find(t => t.id === taskId);
@@ -138,6 +234,26 @@
             // Replace the existing progress bar with our enhanced version
             replaceProgressBar(taskEntry, task);
         });
+    }
+    
+    // Extract task ID from context if not explicitly marked
+    function getTaskIdFromContext(element) {
+        // Look for a task ID in the text content
+        const text = element.textContent;
+        
+        // Common task ID patterns
+        const patterns = [
+            /task-[\w\d-]+/i,
+            /taskId:\s*([\w\d-]+)/i,
+            /task ID:\s*([\w\d-]+)/i
+        ];
+        
+        for (const pattern of patterns) {
+            const match = text.match(pattern);
+            if (match) return match[0] || match[1];
+        }
+        
+        return null;
     }
     
     // Replace a basic progress bar with our enhanced version
@@ -149,7 +265,7 @@
         // If we already replaced this with our custom bar, just update it
         const existingCustomBar = container.querySelector('.task-progress-bar');
         if (existingCustomBar) {
-            updateCustomProgressBar(existingCustomBar, task);
+            existingCustomBar.dataset.taskId = task.id;
             return;
         }
         
@@ -221,42 +337,6 @@
         return progressContainer;
     }
     
-    // Update an existing custom progress bar
-    function updateCustomProgressBar(progressBar, task) {
-        const percent = Math.min(100, Math.round((task.progress / task.totalTime) * 100));
-        
-        // Get the color based on task type
-        const color = taskTypeColors[task.type] || taskTypeColors.default;
-        
-        // Update the progress fill
-        const progressFill = progressBar.querySelector('.progress-fill');
-        if (progressFill) {
-            progressFill.style.width = `${percent}%`;
-            progressFill.style.backgroundColor = color;
-        }
-        
-        // Update percentage text
-        const progressPercent = progressBar.querySelector('.progress-percent');
-        if (progressPercent) {
-            progressPercent.textContent = `${percent}%`;
-        }
-        
-        // Update time remaining
-        const timeRemaining = progressBar.querySelector('.time-remaining');
-        if (timeRemaining) {
-            const remainingTime = task.totalTime - task.progress;
-            const minutes = Math.floor(remainingTime);
-            const seconds = Math.floor((remainingTime - minutes) * 60);
-            timeRemaining.textContent = `${minutes}:${seconds.toString().padStart(2, '0')} remaining`;
-        }
-        
-        // Update tooltip
-        progressBar.title = createTaskTooltip(task);
-        
-        // Update the task ID
-        progressBar.dataset.taskId = task.id;
-    }
-    
     // Create a tooltip for a task
     function createTaskTooltip(task) {
         let tooltip = `Task: ${formatTaskType(task.type)}\n`;
@@ -313,6 +393,7 @@
                 border-radius: 5px;
                 overflow: hidden;
                 position: relative;
+                will-change: transform;
             }
             
             .progress-fill {
@@ -320,7 +401,9 @@
                 background-color: #4caf50; /* Default color, will be overridden */
                 width: 0%; /* Will be set dynamically */
                 border-radius: 5px;
-                transition: width 0.5s ease-in-out;
+                transition: width 0.3s linear; /* Smooth transition between updates */
+                will-change: width, transform;
+                transform: translateZ(0); /* Force GPU acceleration */
             }
             
             .progress-percent {
@@ -349,25 +432,111 @@
             .task-entry {
                 position: relative;
             }
+            
+            /* Animation for progress bars */
+            @keyframes pulse {
+                0% { opacity: 0.9; }
+                50% { opacity: 1; }
+                100% { opacity: 0.9; }
+            }
+            
+            .progress-fill.active {
+                animation: pulse 2s infinite;
+            }
         `;
         document.head.appendChild(style);
+    }
+    
+    // Connect to the task manager's update system
+    function connectToTaskManager() {
+        // Store the original updateTasks function
+        const originalUpdateTasks = window.taskManager.updateTasks;
+        
+        // Replace with our enhanced version
+        window.taskManager.updateTasks = function(...args) {
+            // Call the original function first
+            const result = originalUpdateTasks.apply(this, args);
+            
+            // Then update our progress tracking system
+            updateTaskProgressBars();
+            
+            return result;
+        };
+        
+        console.log("[enhanced-taskbars] Connected to task manager system");
     }
     
     // Initialize when the page loads
     window.addEventListener('DOMContentLoaded', function() {
         // Check if we're on the operations page and delay a bit to ensure the UI is rendered
-        setTimeout(initEnhancedTaskBars, 1000);
+        setTimeout(() => {
+            initEnhancedTaskBars();
+            
+            // Connect to the task manager once it's available
+            if (window.taskManager) {
+                connectToTaskManager();
+            } else {
+                // Wait for task manager to be available
+                const checkInterval = setInterval(() => {
+                    if (window.taskManager) {
+                        connectToTaskManager();
+                        clearInterval(checkInterval);
+                    }
+                }, 100);
+            }
+        }, 500);
     });
     
     // Also initialize if the page changes to operations
     document.addEventListener('pageChanged', function(e) {
         if (e.detail && e.detail.page === 'operations') {
-            setTimeout(initEnhancedTaskBars, 1000);
+            setTimeout(initEnhancedTaskBars, 500);
         }
     });
     
     // Export the initialization function for manual use
     window.initEnhancedTaskBars = initEnhancedTaskBars;
+    window.updateTaskProgressBarsSystem = updateTaskProgressBars;
+    
+    // Monitor for DOM mutations to update progress bars when new tasks appear
+    function setupMutationObserver() {
+        const observer = new MutationObserver((mutations) => {
+            let needsUpdate = false;
+            
+            mutations.forEach(mutation => {
+                // Check if we added nodes that might contain task bars
+                if (mutation.addedNodes.length > 0) {
+                    for (const node of mutation.addedNodes) {
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            if (
+                                node.classList?.contains('task-entry') || 
+                                node.classList?.contains('employee-card') ||
+                                node.querySelector?.('.task-entry, .task-section, progress')
+                            ) {
+                                needsUpdate = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            });
+            
+            if (needsUpdate) {
+                updateTaskProgressBars();
+            }
+        });
+        
+        // Start observing the document with the configured parameters
+        observer.observe(document.body, { 
+            childList: true, 
+            subtree: true 
+        });
+        
+        console.log("[enhanced-taskbars] Mutation observer activated");
+    }
+    
+    // Setup the mutation observer after a short delay
+    setTimeout(setupMutationObserver, 1000);
     
     // Monkey patch the showPage function to detect page changes
     const originalShowPage = window.showPage;
@@ -381,10 +550,5 @@
             });
             document.dispatchEvent(event);
         };
-    }
-    
-    // Attempt to initialize on load
-    if (document.readyState === 'complete' || document.readyState === 'interactive') {
-        setTimeout(initEnhancedTaskBars, 1000);
     }
 })();
