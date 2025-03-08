@@ -209,5 +209,58 @@ window.toggleGamePause = function() {
     }
 };
 
+// Add this to your main.js file to implement the missing navigation system
+
+// Define the showPage function (this is the missing function)
+window.showPage = function(pageName) {
+    console.log(`Navigating to page: ${pageName}`);
+    
+    // Update the active navigation item in the sidebar
+    window.updateActiveNavItem(pageName);
+    
+    // Get the main content container
+    const mainContent = document.querySelector('.main-content');
+    if (!mainContent) {
+        console.error('Main content container not found');
+        return;
+    }
+    
+    // Clear existing content
+    mainContent.innerHTML = '';
+    
+    // Store current page name for reference
+    window.currentPage = pageName;
+    
+    // Call the appropriate page renderer based on the page name
+    const rendererName = `render${pageName.charAt(0).toUpperCase() + pageName.slice(1)}Page`;
+    
+    if (typeof window[rendererName] === 'function') {
+        try {
+            // Call the page renderer
+            window[rendererName](mainContent);
+            console.log(`Rendered page: ${pageName}`);
+            
+            // Dispatch custom event that page has changed (for components that need to react)
+            const event = new CustomEvent('pageChanged', { 
+                detail: { page: pageName } 
+            });
+            document.dispatchEvent(event);
+        } catch (error) {
+            console.error(`Error rendering page ${pageName}:`, error);
+            mainContent.innerHTML = `<div class="error-message">
+                <h3>Error Loading Page</h3>
+                <p>There was an error loading the ${pageName} page.</p>
+                <pre>${error.message}</pre>
+            </div>`;
+        }
+    } else {
+        console.error(`Page renderer not found: ${rendererName}`);
+        mainContent.innerHTML = `<div class="error-message">
+            <h3>Page Not Found</h3>
+            <p>The requested page "${pageName}" does not exist or is still under development.</p>
+        </div>`;
+    }
+};
+
 // Initialize when the DOM is ready
 document.addEventListener('DOMContentLoaded', initGame);

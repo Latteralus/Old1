@@ -1,4 +1,4 @@
-// refined-sidebar.js
+// refined-sidebar.js with Settings page added
 
 window.renderSidebar = function renderSidebar() {
     const sidebar = document.createElement('aside');
@@ -28,6 +28,9 @@ window.renderSidebar = function renderSidebar() {
             { label: 'Research', pageName: 'research', icon: '🔬' },
             { label: 'Marketing', pageName: 'marketing', icon: '📢' },
             { label: 'Statistics', pageName: 'statistics', icon: '📊' }
+        ],
+        system: [
+            { label: 'Settings', pageName: 'settings', icon: '⚙️' }
         ]
     };
 
