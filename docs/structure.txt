@@ -1,0 +1,207 @@
+# Game Structure Outline: The Pharmacy (TestBed)
+
+This document outlines the structure of the game "The Pharmacy (TestBed)", detailing the main directories, key files, their operations, and dependencies.
+
+## 1. Directory Structure:
+
+- **docs/:**
+    - Contains documentation files.
+        - `-1737779338751.log`: Log file (likely for debugging or tool output).
+        - `overview.txt`: Concept overview of the game, including key features, mechanics, and development plan.
+        - `structure.txt` (This file): Outline of the game's structure.
+
+- **main/:**
+    - Main game directory, containing core game files and assets.
+    - Files:
+        - `.env`: Environment configuration file (likely not used in this project based on content).
+        - `.gitignore`: Specifies intentionally untracked files that Git should ignore.
+        - `index.html`: Main HTML file for the game UI.
+        - `LICENSE`: License information for the project.
+        - `package-lock.json`: Records the exact versions of dependencies used in the project.
+        - `package.json`:  Lists project dependencies and scripts.
+        - `server.js`:  Likely a development server (not analyzed in detail).
+    - Directories:
+        - `components/`:  Likely contains reusable UI components (not explored in detail).
+        - `css/`: Contains CSS stylesheets for styling the game UI (not explored in detail).
+        - `js/`: Contains JavaScript source code for the game logic and UI.
+            - `data/`: Contains JavaScript files holding game data.
+                - `dosageForms.js`: Data for different medication dosage forms.
+                - `employees.js`: Data for employees (stats, roles, skills).
+                - `equipment.js`: Data for compounding equipment (cost, efficiency).
+                - `finances.js`: Data related to game finances (likely not a data file, but a module).
+                - `helpers.js`: Helper functions (not explored in detail).
+                - `insurance.js`: Data for insurance plans (copays, formularies).
+                - `materials.js`: Data for raw materials (cost, inventory).
+                - `names.js`: Lists of names for random name generation.
+                - `products.js`: Data for products (medications, ingredients, dosage forms).
+                - `research.js`: Data for research levels and unlocks.
+            - `pages/`: Contains JavaScript files for different game pages/views.
+                - `customersPage.js`: Logic for the Customers page.
+                - `dashboardPage.js`: Logic for the Dashboard page.
+                - `employeesPage.js`: Logic for the Employees page.
+                - `equipmentPage.js`: Logic for the Equipment page.
+                - `financesPage.js`: Logic for the Finances page.
+                - `inventoryPage.js`: Logic for the Inventory page.
+                - `marketingPage.js`: Logic for the Marketing page.
+                - `marketplacePage.js`: Logic for the Marketplace page.
+                - `operationsPage.js`: Logic for the Operations page (live game environment).
+                - `ordersPage.js`: Logic for the Orders page.
+                - `researchPage.js`: Logic for the Research page.
+                - `statisticsPage.js`: Logic for the Statistics page.
+            - Files:
+                - `brandReputation.js`: Module for managing brand reputation.
+                - `customers.js`: Module for managing customers (generation, status, patience).
+                - `data.js`: Likely contains global data or data loading functions (not explored in detail).
+                - `dataInitialization.js`: Likely for initializing game data at startup (not explored in detail).
+                - `events.js`: Likely for handling game events (not explored in detail).
+                - `insuranceClaims.js`: Module for managing insurance claims.
+                - `inventory.js`: Module for managing inventory (adding, removing items).
+                - `main.js`: Main game entry point, initializes game state, UI, and game loop.
+                - `orders.js`: Module for managing customer orders (generation, processing).
+                - `prescriptions.js`: Module for managing prescriptions (generation, status, filling).
+                - `production.js`: Module for handling production tasks (compounding, inventory checks).
+                - `taskAssignment.js`: Module for automatically assigning tasks to employees.
+                    - **Updated Operations:**
+                        - `autoAssignTasks()`: Refactored to be iterative instead of recursive for improved efficiency and to prevent potential issues with task assignment. Skill-based prioritization in employee selection has been temporarily removed for simplification.
+                        - `findAvailableEmployeeForTask(task)`: Simplified to return the first eligible employee, removing skill-based prioritization for now.
+                        - `unassignTask(taskId)`: Modified to delay the call to `autoAssignTasks()` using `setTimeout` to address potential race conditions.
+                - `taskManager.js`: Module for managing tasks (creation, status, progress).
+                - `timeEvents.js`: Module for handling time-based game events (hourly, daily checks).
+                - `ui.js`: Module for updating the user interface (rendering pages, updating elements).
+        - `modals/`: Likely contains modal UI components (not explored in detail).
+        - `node_modules/`: Contains installed Node.js packages (dependencies).
+        - `views/`: Likely contains HTML templates or view files (not explored in detail).
+
+## 2. Key Modules and Operations:
+
+- **main.js:**
+    - **Operations:**
+        - Initializes the game state (`window.gameState`).
+        - Sets up the UI by rendering the top bar and sidebar.
+        - Shows the initial page (dashboard).
+        - Starts the game loop using `setInterval` for real-time simulation.
+        - Manages game time progression, day/night cycle, and triggers end-of-day events.
+    - **Dependencies:**
+        - `window.production` (for initialization)
+        - `window.renderTopBar`, `window.renderSidebar`, `window.showPage`, `window.updateActiveNavItem` (UI rendering functions, likely defined in `ui.js` or page modules)
+        - `window.finances` (for setting initial prices)
+        - `window.timeEvents` (for end-of-day and minute checks)
+        - `window.ui` (for time updates)
+
+- **ui.js:**
+    - **Operations:**
+        - Contains functions to update various UI elements dynamically (e.g., `updateCustomers`, `updatePrescriptions`, `updateFinances`, `updateTime`).
+        - Provides helper functions for formatting dates and times.
+        - Implements a simple "router" (`window.showPage`) to switch between different game pages.
+    - **Dependencies:**
+        - `window.customers`, `window.prescriptions`, `window.financesData`, `window.gameState` (for accessing game data to display)
+        - Page rendering functions (e.g., `window.renderOperationsPage`, `window.renderEmployeesPage`, etc., likely defined in page modules)
+        - `window.updateActiveNavItem` (for sidebar updates, likely defined in sidebar rendering logic)
+
+- **production.js:**
+    - **Operations:**
+        - Manages the production of medications through compounding.
+        - `canCompound(product)`: Checks if there are enough materials to compound a product.
+        - `createCompoundTask(product, quantity)`: Creates a task to compound a specific product.
+        - `checkAndCreateCompoundTasks()`: Periodically checks inventory levels and creates compounding tasks if needed.
+        - `handleTaskCompletion(task)`: Handles the completion of compounding tasks, updating inventory and deducting materials.
+        - `init()`: Initializes the production module, sets up periodic inventory checks.
+    - **Dependencies:**
+        - `window.materialsData`, `window.productsData` (for accessing material and product data)
+        - `window.taskManager` (for adding compound tasks)
+        - `window.updateUI` (for updating inventory UI)
+
+- **taskManager.js:**
+    - **Operations:**
+        - Manages all game tasks (compounding, filling prescriptions, customer interactions, consultations).
+        - `addTask(task)`: Adds a new task to the task list.
+        - `getUnassignedTasks()`: Returns a list of tasks that are not yet assigned to employees.
+        - `getTasksForEmployee(empId)`: Returns a list of tasks assigned to a specific employee.
+        - `updateTasks(minutes)`: Updates the progress of in-progress tasks and finalizes completed tasks.
+    - **Dependencies:**
+        - `window.taskAssignment` (for unassigning tasks)
+        - `window.production` (for handling task completion and inventory updates)
+        - `window.prescriptions` (for marking prescriptions as filled)
+        - `window.customers` (for updating customer status after interactions/consultations)
+
+- **taskAssignment.js:**
+    - **Operations:**
+        - Automatically assigns pending tasks to available employees based on roles and skills.
+        - `assignTaskToEmployee(taskId, employeeId)`: Assigns a specific task to an employee.
+        - `unassignTask(taskId)`: Unassigns an employee from a task, returning it to pending status.
+        - `autoAssignTasks()`: Main logic for automatically assigning tasks.
+        - `canFillPrescription(prescriptionId)`: Checks if there is enough product inventory to fill a prescription.
+        - `findAvailableEmployeeForTask(task)`: Finds an eligible and available employee for a given task.
+    - **Dependencies:**
+        - `window.taskManager` (for accessing and updating tasks)
+        - `window.employees` (for accessing employee data)
+        - `window.productsData`, `window.prescriptions` (for inventory checks)
+        - `window.production` (for checking compounding material availability)
+        - `window.renderOperationsPage` (for UI updates)
+
+- **customers.js:**
+    - **Operations:**
+        - Manages customers in the pharmacy (generation, status, patience, mood).
+        - `generateCustomer(hour)`: Generates a new customer with a type, insurance, and prescription.
+        - `updateCustomerStatus(customerId, newStatus)`: Updates a customer's status (waiting, consulting, checkout, etc.).
+        - `updateCustomerMood(customerId, moodChange)`: Updates a customer's mood.
+        - `customerLeaves(customerId)`: Removes a customer from the active customer list.
+        - `startCustomerTimer(customerId)`: Starts a timer to track customer patience.
+        - `getRandomCustomerType()`, `getRandomInsurance()`: Helper functions to select random customer types and insurance plans.
+        - `getCustomerById(customerId)`: Retrieves a customer object by ID.
+    - **Dependencies:**
+        - `window.gameState` (for current game time)
+        - `window.prescriptions` (for generating and assigning prescriptions)
+        - `window.taskManager` (for adding customer interaction tasks)
+        - `window.ui` (for updating customer list UI)
+        - `window.getRandomFirstName`, `window.getRandomLastName` (name generation functions, likely in `names.js` or `helpers.js`)
+        - `window.insuranceData` (for insurance plan data)
+        - `window.customerTypes` (customer type data, likely defined within `customers.js` or in `data/customers.js`)
+
+- **prescriptions.js:**
+    - **Operations:**
+        - Manages prescriptions (generation, status, filling).
+        - `generatePrescription(customerId)`: Generates a new prescription for a customer.
+        - `updatePrescriptionStatus(prescriptionId, newStatus)`: Updates a prescription's status (pending, filled).
+        - `prescriptionFilled(prescriptionId, customerId)`: Handles the event when a prescription is filled, updating status and creating checkout tasks.
+        - `createConsultationTask(customerId)`: Creates a consultation task for a pharmacist.
+        - `getPrescription(prescriptionId)`: Retrieves a prescription object by ID.
+    - **Dependencies:**
+        - `window.customers` (for customer data)
+        - `window.productsData` (for product data)
+        - `window.taskManager` (for adding fill prescription and checkout tasks)
+        - `window.ui` (for updating prescription list UI)
+        - `window.taskAssignment` (for auto-assigning tasks)
+        - `window.research` (for getting unlocked products)
+        - `window.generateDoctorName` (name generation function, likely in `names.js` or `helpers.js`)
+
+- **Page Modules (e.g., operationsPage.js, dashboardPage.js, etc.):**
+    - **Operations:**
+        - Each page module is responsible for rendering a specific game page in the UI (e.g., Operations page, Dashboard page, Inventory page).
+        - They use JavaScript and DOM manipulation to create the page structure and display game data.
+        - Some pages also include interactive elements and event listeners.
+    - **Dependencies:**
+        - `window.ui` (for using UI update functions)
+        - Game data modules (e.g., `window.employeesData`, `window.taskManager.tasks`, `window.customers.activeCustomers`, `window.prescriptions.activePrescriptions`, `window.financesData`, `window.equipmentData`, `window.materialsData`, `window.productsData`, `window.researchData`)
+        - Chart.js library (for finance charts in `financesPage.js`)
+
+## 3. Data Files (main/js/data/):
+
+- **dosageForms.js:** Defines available dosage forms for medications (Capsules, Tablets, Creams, etc.).
+- **employees.js:** Defines employee data (roles, skills, salaries, initial morale).
+- **equipment.js:** Defines compounding equipment data (cost, efficiency, maintenance, dosage forms it can produce).
+- **finances.js:**  Likely contains functions and data related to game finances (cash, income, expenses, transactions).
+- **helpers.js:** Contains helper functions used across the game (not explored in detail).
+- **insurance.js:** Defines insurance plan data (plan names, copays, formularies, coverage rules).
+- **materials.js:** Defines raw material data (names, costs, inventory levels, auto-order settings).
+- **names.js:** Contains lists of first names and last names for generating random names for customers and doctors.
+- **products.js:** Defines product (medication) data (names, costs, ingredients, dosage forms, production time, equipment needed, max inventory).
+- **research.js:** Defines research levels, costs, research times, descriptions, and unlocks (products, equipment).
+
+## 4. Dependencies Summary:
+
+- **UI Modules (`ui.js`, page modules) depend on:** Game data modules, rendering functions, and potentially external libraries (Chart.js).
+- **Game Logic Modules (`production.js`, `taskManager.js`, `taskAssignment.js`, `customers.js`, `prescriptions.js`, `timeEvents.js`, `brandReputation.js`, `insuranceClaims.js`) depend on:** Data modules, each other (for inter-module communication and task flow), and UI modules (for updates).
+- **Data Modules (`data/*.js`) are generally independent** and provide data to other modules.
+
+This outline provides a high-level overview of the game's structure. Further in-depth analysis of each module would be needed for a more detailed understanding.
