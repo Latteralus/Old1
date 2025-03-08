@@ -112,5 +112,16 @@
       }
     });
   </script>
+  <script>
+    window.addEventListener('error', (event) => {
+      document.body.innerHTML = `
+        <div style="color: red; padding: 20px;">
+          Error: ${event.error.message}<br>
+          Stack: ${event.error.stack}
+        </div>
+      `;
+      console.error('Application error:', event.error);
+    });
+  </script>
 </body>
 </html>
