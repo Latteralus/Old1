@@ -12,7 +12,10 @@
   <!-- Debug script for troubleshooting -->
   <script src="js/debug.js"></script>
 
-  <!-- Add game initializer first - it needs to be available before game logic -->
+  <!-- Add bootstrap script first to handle initialization -->
+  <script src="js/game-bootstrap.js"></script>
+
+  <!-- Add game initializer next - it needs to be available before game logic -->
   <script src="js/gameInitializer.js"></script>
 
   <!-- Load the game initialization script -->
@@ -65,11 +68,8 @@
   <!-- Electron integration script -->
   <script src="js/electron-integration.js"></script>
 
-  <!-- Fallback script for emergency initialization -->
-  <script src="js/fallback.js"></script>
-
+  <!-- Global error handler with Electron logging support -->
   <script>
-    // Global error handler with Electron logging support
     window.addEventListener('error', (event) => {
       document.body.innerHTML = `
         <div style="color: red; padding: 20px;">
