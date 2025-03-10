@@ -148,11 +148,11 @@ window.timeEvents = (function() {
     // ---------------------------------------------------------
     function minuteCheck(gameState) {
         try {
-            // Update tasks progress (1 minute) every TASK_UPDATE_INTERVAL
-            // This ensures we're not updating tasks too frequently
-            if (window.taskManager && window.taskManager.updateTasks && 
-                gameState.currentDate.getMinutes() % CONFIG.TASK_UPDATE_INTERVAL === 0) {
-                window.taskManager.updateTasks(CONFIG.TASK_UPDATE_INTERVAL);
+            // Always update tasks with 1 minute
+            // Note: main.js now directly updates tasks with exact minutes,
+            // but we'll keep this as a backup in case that doesn't happen
+            if (window.taskManager && window.taskManager.updateTasks) {
+                window.taskManager.updateTasks(1);
             }
     
             // If it's exactly XX:00, run hourly check
@@ -413,6 +413,17 @@ window.timeEvents = (function() {
         }
     }
 
+    // Force a time-step update to ensure task progress
+    function forceTimeUpdate(minutes = 1) {
+        console.log(`[timeEvents] Forcing time update of ${minutes} minutes`);
+        
+        if (window.taskManager && window.taskManager.updateTasks) {
+            window.taskManager.updateTasks(minutes);
+        }
+        
+        return true;
+    }
+
     // ---------------------------------------------------------
     // Add an event listener for time-related events
     // ---------------------------------------------------------
@@ -436,6 +447,7 @@ window.timeEvents = (function() {
         spawnCustomersForHour,
         startOfDay,
         autoOrderCheck,
+        forceTimeUpdate,
         CONFIG, // Expose configuration settings
         
         // Event system
@@ -451,3 +463,30 @@ window.timeEvents = (function() {
         }
     };
 })();
+
+// Helper function to manually force time forward (for debugging)
+window.forceTimeForward = function(minutes = 5) {
+    console.log(`[FORCE] Manually advancing time by ${minutes} minutes`);
+    
+    // Update game time
+    const msToAdd = minutes * 60 * 1000;
+    window.gameState.currentDate.setTime(window.gameState.currentDate.getTime() + msToAdd);
+    
+    // Force task updates
+    if (window.taskManager && window.taskManager.updateTasks) {
+        window.taskManager.updateTasks(minutes);
+    }
+    
+    // Force UI updates
+    if (window.ui && window.ui.updateTime) {
+        window.ui.updateTime();
+    }
+    
+    if (window.ui && window.ui.forceUpdate) {
+        window.ui.forceUpdate('time');
+        window.ui.forceUpdate('customers');
+        window.ui.forceUpdate('prescriptions');
+    }
+    
+    return true;
+};

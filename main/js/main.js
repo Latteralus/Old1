@@ -1,4 +1,4 @@
-// Modified main.js to ensure proper initialization
+// Modified main.js to ensure proper initialization and time flow
 
 // Set the desired starting date and time (year, month (0-indexed), day, hour, minute)
 const startDate = new Date(2023, 0, 1, 7, 0);
@@ -50,6 +50,8 @@ function updateSimulation(timestamp) {
     window.gameState.simulationAccumulator += simulationDelta;
     window.gameState.lastSimulationTime = timestamp;
     
+    console.log(`[main] Simulation update, accumulator: ${window.gameState.simulationAccumulator.toFixed(2)}ms`);
+    
     // Limit updates to prevent spiral of death
     let updates = 0;
     
@@ -57,6 +59,8 @@ function updateSimulation(timestamp) {
     while (window.gameState.simulationAccumulator >= GAME_CONFIG.FIXED_TIMESTEP && updates < GAME_CONFIG.MAX_UPDATES_PER_FRAME) {
         // Calculate the game time to advance (in milliseconds)
         const gameTimeDelta = (GAME_CONFIG.FIXED_TIMESTEP * GAME_CONFIG.SIMULATION_SPEED) / GAME_CONFIG.GAME_MINUTE_IN_MS * 60 * 1000;
+        
+        console.log(`[main] Advancing game time by ${gameTimeDelta.toFixed(2)}ms (${(gameTimeDelta / (60 * 1000)).toFixed(2)} game minutes)`);
         
         // Update the game time
         updateGameTime(gameTimeDelta);
@@ -71,6 +75,14 @@ function updateSimulation(timestamp) {
 function updateGameTime(msElapsed) {
     // Advance the game time
     window.gameState.currentDate.setTime(window.gameState.currentDate.getTime() + msElapsed);
+    
+    // Convert milliseconds to minutes for task updates
+    const minutesElapsed = msElapsed / (60 * 1000);
+    
+    // ALWAYS update tasks with the exact time elapsed
+    if (window.taskManager && window.taskManager.updateTasks && minutesElapsed > 0) {
+        window.taskManager.updateTasks(minutesElapsed);
+    }
     
     // Check for end of day (22:00 is 10 PM)
     const currentHour = window.gameState.currentDate.getHours();
@@ -217,5 +229,38 @@ if (typeof window.showPage !== 'function') {
         }
     };
 }
+
+// Set up game loop monitoring
+console.log("[main] Setting up game loop monitoring");
+let lastFrameTime = Date.now();
+let frameCount = 0;
+
+setInterval(() => {
+    const now = Date.now();
+    const elapsed = now - lastFrameTime;
+    const fps = frameCount / (elapsed / 1000);
+    frameCount = 0;
+    lastFrameTime = now;
+    
+    console.log(`[main] Game loop health check: ${elapsed}ms since last frame, ` +
+                `FPS: ${fps.toFixed(1)}, ` +
+                `game time: ${window.gameState?.currentDate?.toLocaleTimeString() || 'unknown'}`);
+    
+    // Check if game is paused or day is inactive
+    if (window.gameState?.isPaused) {
+        console.log("[main] Game is currently PAUSED");
+    }
+    
+    if (!window.gameState?.isDayActive) {
+        console.log("[main] Day is currently INACTIVE");
+    }
+}, 5000);
+
+// Monkey-patch gameLoop to count frames
+const originalGameLoop = window.gameLoop;
+window.gameLoop = function(timestamp) {
+    frameCount++;
+    return originalGameLoop(timestamp);
+};
 
 console.log("main.js loaded successfully");

@@ -252,4 +252,10 @@
             window.employeesData.forEach(attemptToFixEmployee);
         }
     };
+    // At the end of the file
+// Immediately initialize when the file loads
+initTaskErrorRecovery();
+
+// Call this periodically to ensure task system is running
+setInterval(checkAndFixEmployeeErrors, 30000); // Check every 30 seconds
 })();
