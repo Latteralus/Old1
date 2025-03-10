@@ -298,55 +298,80 @@ A feature is considered complete when:
 This transformation plan focuses on preserving the core gameplay experience while significantly improving the technical foundation, maintainability, and user experience of PharmaSim as a native Electron application.
 
 ## Proposed File Structure
+# PharmaSim Naming Convention and File Structure
+
+## General Naming Conventions
+
+- **File Names**: Use kebab-case for file names (e.g., `game-state.ts`, `employee-service.ts`)
+- **Component Names**: Use PascalCase for React components and their files (e.g., `EmployeeList.tsx`, `InventoryPanel.tsx`)
+- **Class Names**: Use PascalCase for classes (e.g., `GameSimulation`, `EmployeeManager`)
+- **Interface Names**: Use PascalCase with 'I' prefix (e.g., `IEmployeeData`, `IGameState`)
+- **Type Names**: Use PascalCase with 'T' prefix for complex types (e.g., `TEmployeeRole`, `TInventoryItem`)
+- **Enum Names**: Use PascalCase (e.g., `EmployeeRole`, `GameDifficulty`)
+- **Constants**: Use UPPER_SNAKE_CASE for constants (e.g., `MAX_EMPLOYEES`, `DEFAULT_CAPITAL`)
+- **Functions**: Use camelCase for functions (e.g., `calculateProfit()`, `handleEmployeeHire()`)
+- **Variables**: Use camelCase for variables (e.g., `employeeList`, `currentInventory`)
+- **Redux Actions**: Use UPPER_SNAKE_CASE for action types (e.g., `HIRE_EMPLOYEE`, `UPDATE_INVENTORY`)
+- **Redux Action Creators**: Use camelCase with descriptive verbs (e.g., `hireEmployee()`, `updateInventory()`)
+- **Redux Reducers**: Use camelCase with 'Reducer' suffix (e.g., `employeeReducer`, `inventoryReducer`)
+- **Redux Selectors**: Use camelCase with 'select' prefix (e.g., `selectAllEmployees`, `selectInventoryItems`)
+
+## Directory Structure
 
 ```
-pharmasim-electron/
+thepharmacy/
+├── node_modules/
 ├── package.json
+├── package-lock.json
 ├── tsconfig.json
 ├── webpack.config.js
 ├── .gitignore
+├── README.md
 ├── src/
 │   ├── main/                      # Main process code
 │   │   ├── index.ts               # Main entry point
-│   │   ├── preload.ts             # Preload script for secure IPC
+│   │   ├── preload.ts             # Preload script
+│   │   ├── types/                 # Type definitions
+│   │   │   ├── game-state.ts      # Game state interface
+│   │   │   ├── employee.ts        # Employee interfaces
+│   │   │   └── ...
 │   │   ├── simulation/            # Core simulation engine
-│   │   │   ├── gameLoop.ts        # Handles game timing
-│   │   │   ├── timeManager.ts     # Manages game time progression
-│   │   │   └── simulationEngine.ts # Main simulation controller
-│   │   ├── models/                # Shared data models
-│   │   │   ├── employee.ts
-│   │   │   ├── customer.ts
-│   │   │   ├── product.ts
-│   │   │   └── ...
+│   │   │   ├── game-loop.ts       # Game timing and loop
+│   │   │   ├── time-manager.ts    # Game time progression
+│   │   │   └── simulation-engine.ts # Main simulation controller
 │   │   ├── services/              # Main process services
-│   │   │   ├── financialService.ts
-│   │   │   ├── inventoryService.ts
-│   │   │   ├── employeeService.ts
-│   │   │   ├── saveLoadService.ts
-│   │   │   └── ...
-│   │   └── ipc/                   # IPC handlers
-│   │       ├── financesHandlers.ts
-│   │       ├── simulationHandlers.ts
-│   │       └── ...
+│   │   │   ├── file-service.ts    # File I/O operations
+│   │   │   ├── save-service.ts    # Game save/load functionality
+│   │   │   ├── config-service.ts  # Configuration management
+│   │   │   ├── ipc-service.ts     # IPC communication handler
+│   │   │   └── logger-service.ts  # Logging functionality
+│   │   └── utils/                 # Utility functions
+│   │       ├── path-utils.ts      # Path manipulation utilities
+│   │       └── error-handler.ts   # Error handling utilities
 │   │
 │   └── renderer/                  # Renderer process code
 │       ├── index.tsx              # Renderer entry point
 │       ├── App.tsx                # Main React component
+│       ├── index.html             # HTML template
+│       ├── types/                 # Type definitions for renderer
+│       │   ├── ui-state.ts        # UI state interfaces
+│       │   └── ...
 │       ├── store/                 # Redux store
 │       │   ├── index.ts           # Store configuration
 │       │   ├── actions/           # Redux actions
-│       │   │   ├── financeActions.ts
-│       │   │   ├── employeeActions.ts
+│       │   │   ├── employee-actions.ts
+│       │   │   ├── inventory-actions.ts
 │       │   │   └── ...
 │       │   ├── reducers/          # Redux reducers
-│       │   │   ├── financeReducer.ts
-│       │   │   ├── employeeReducer.ts
+│       │   │   ├── employee-reducer.ts
+│       │   │   ├── inventory-reducer.ts
 │       │   │   └── ...
 │       │   ├── thunks/            # Redux Thunk middleware functions
-│       │   │   ├── financeThunks.ts
+│       │   │   ├── finance-thunks.ts
 │       │   │   └── ...
 │       │   └── selectors/         # Redux selectors
-│       │       ├── financeSelectors.ts
+│       │       ├── employee-selectors.ts
+│       │       ├── inventory-selectors.ts
 │       │       └── ...
 │       ├── components/            # React components
 │       │   ├── core/              # Core UI components
@@ -366,10 +391,6 @@ pharmasim-electron/
 │       │   │   ├── InventoryList.tsx
 │       │   │   ├── ProductCard.tsx
 │       │   │   └── ...
-│       │   ├── customers/         # Customer-related components
-│       │   │   ├── CustomerList.tsx
-│       │   │   ├── CustomerCard.tsx
-│       │   │   └── ...
 │       │   └── ui/                # General UI components
 │       │       ├── Button.tsx
 │       │       ├── Card.tsx
@@ -379,8 +400,6 @@ pharmasim-electron/
 │       │   ├── DashboardPage.tsx
 │       │   ├── OperationsPage.tsx
 │       │   ├── FinancesPage.tsx
-│       │   ├── EmployeesPage.tsx
-│       │   ├── InventoryPage.tsx
 │       │   └── ...
 │       ├── hooks/                 # Custom React hooks
 │       │   ├── useGameTime.ts
@@ -400,14 +419,74 @@ pharmasim-electron/
 │           └── components/
 │               ├── button.scss
 │               └── ...
-├── assets/                       # Static assets
+├── assets/                        # Static assets
 │   ├── images/
 │   ├── icons/
 │   └── fonts/
-├── build/                        # Build output
-├── dist/                         # Distribution packages
-└── tests/                        # Tests
+├── build/                         # Build configuration
+│   ├── webpack.main.config.js
+│   └── webpack.renderer.config.js
+├── dist/                          # Distribution packages
+└── tests/                         # Tests
     ├── unit/
     ├── integration/
     └── e2e/
 ```
+
+## Specific File Naming Map for Current Files
+
+| Current File | New File Location | 
+|-------------|-------------------|
+| electron-main.js | src/main/index.ts |
+| preload.js | src/main/preload.ts |
+| game-integration.js | src/main/services/game-service.ts |
+| electron-integration.js | src/renderer/api/electron-bridge.ts |
+| index.html | src/renderer/index.html |
+| main.html | src/renderer/game.html (initially) → Later refactored into React components |
+| settings.html | src/renderer/settings.html (initially) → Later refactored to SettingsPage.tsx |
+
+## Data Models and Interfaces
+
+### Game State
+- `IGameState` - Main game state interface
+- `IFinancesData` - Financial data structure
+- `IEmployeesData` - Employee data structure
+- `IInventoryData` - Inventory data structure
+
+### Employees
+- `IEmployee` - Base employee interface
+- `IPharmacist` - Pharmacist-specific interface
+- `ITechnician` - Technician-specific interface
+- `TEmployeeRole` - Employee role type (enum)
+
+### Inventory
+- `IProduct` - Product interface
+- `IMaterial` - Raw material interface
+- `IEquipment` - Equipment interface
+
+### Operations
+- `ITask` - Task interface
+- `IPrescription` - Prescription interface
+- `IOrder` - Order interface
+
+### Customers
+- `ICustomer` - Customer interface
+- `IInsurance` - Insurance interface
+
+## Redux Structure
+
+### Slices
+- `gameSlice` - Game simulation state
+- `employeesSlice` - Employee management
+- `inventorySlice` - Inventory management
+- `financesSlice` - Financial management
+- `customersSlice` - Customer management
+- `uiSlice` - UI state management
+
+### Action Types (example)
+- `EMPLOYEES/HIRE_EMPLOYEE`
+- `EMPLOYEES/FIRE_EMPLOYEE`
+- `INVENTORY/ADD_ITEM`
+- `FINANCES/RECORD_TRANSACTION`
+
+This naming convention and file structure provides a clear, consistent framework that will scale with the project and prevent the need for renaming later.
