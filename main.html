@@ -4,69 +4,70 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Pharmacy Sim</title>
-  <link rel="stylesheet" href="css/style.css">
+  <!-- Use main/ prefix consistently for all resources -->
+  <link rel="stylesheet" href="main/css/style.css">
 </head>
 <body>
   <div id="root"></div>
 
   <!-- Debug script for troubleshooting -->
-  <script src="js/debug.js"></script>
+  <script src="main/js/debug.js"></script>
 
   <!-- Add bootstrap script first to handle initialization -->
-  <script src="js/game-bootstrap.js"></script>
+  <script src="main/js/game-bootstrap.js"></script>
 
   <!-- Add game initializer next - it needs to be available before game logic -->
-  <script src="js/gameInitializer.js"></script>
+  <script src="main/js/gameInitializer.js"></script>
 
   <!-- Load the game initialization script -->
-  <script src="js/main.js"></script>
+  <script src="main/js/main.js"></script>
 
   <!-- Load data modules -->
-  <script src="js/data/names.js"></script>
-  <script src="js/data/employees.js"></script>
-  <script src="js/data/products.js"></script>
-  <script src="js/data/materials.js"></script>
-  <script src="js/data/equipment.js"></script>
-  <script src="js/data/insurance.js"></script>
-  <script src="js/data/research.js"></script>
-  <script src="js/data/helpers.js"></script>
-  <script src="js/data/finances.js"></script>
+  <script src="main/js/data/names.js"></script>
+  <script src="main/js/data/employees.js"></script>
+  <script src="main/js/data/products.js"></script>
+  <script src="main/js/data/materials.js"></script>
+  <script src="main/js/data/equipment.js"></script>
+  <script src="main/js/data/insurance.js"></script>
+  <script src="main/js/data/research.js"></script>
+  <script src="main/js/data/helpers.js"></script>
+  <script src="main/js/data/finances.js"></script>
 
   <!-- Load core game modules -->
-  <script src="js/ui.js"></script>
-  <script src="js/taskManager.js"></script>
-  <script src="js/taskAssignment.js"></script>
-  <script src="js/production.js"></script>
-  <script src="js/customers.js"></script>
-  <script src="js/prescriptions.js"></script>
-  <script src="js/insuranceClaims.js"></script>
-  <script src="js/timeEvents.js"></script>
-  <script src="js/taskbars.js"></script>
-  <script src="js/brandReputation.js"></script>
+  <script src="main/js/ui.js"></script>
+  <script src="main/js/taskManager.js"></script>
+  <script src="main/js/taskAssignment.js"></script>
+  <script src="main/js/production.js"></script>
+  <script src="main/js/customers.js"></script>
+  <script src="main/js/prescriptions.js"></script>
+  <script src="main/js/insuranceClaims.js"></script>
+  <script src="main/js/timeEvents.js"></script>
+  <script src="main/js/taskbars.js"></script>
+  <script src="main/js/brandReputation.js"></script>
   
   <!-- Load UI components -->
-  <script src="components/topBar.js"></script>
-  <script src="components/sideBar.js"></script>
-  <script src="components/panel.js"></script>
-  <script src="modals/modal.js"></script>
+  <script src="main/components/topBar.js"></script>
+  <script src="main/components/sideBar.js"></script>
+  <script src="main/components/panel.js"></script>
+  <script src="main/modals/modal.js"></script>
   
   <!-- Load page renderers -->
-  <script src="js/pages/dashboardPage.js"></script>
-  <script src="js/pages/operationsPage.js"></script>
-  <script src="js/pages/employeesPage.js"></script>
-  <script src="js/pages/customersPage.js"></script>
-  <script src="js/pages/ordersPage.js"></script>
-  <script src="js/pages/inventoryPage.js"></script>
-  <script src="js/pages/marketplacePage.js"></script>
-  <script src="js/pages/equipmentPage.js"></script>
-  <script src="js/pages/financesPage.js"></script>
-  <script src="js/pages/researchPage.js"></script>
-  <script src="js/pages/marketingPage.js"></script>
-  <script src="js/pages/statisticsPage.js"></script>
-  <script src="js/pages/settingsPage.js"></script>
+  <script src="main/js/pages/dashboardPage.js"></script>
+  <script src="main/js/pages/operationsPage.js"></script>
+  <script src="main/js/pages/employeesPage.js"></script>
+  <script src="main/js/pages/customersPage.js"></script>
+  <script src="main/js/pages/ordersPage.js"></script>
+  <script src="main/js/pages/inventoryPage.js"></script>
+  <script src="main/js/pages/marketplacePage.js"></script>
+  <script src="main/js/pages/equipmentPage.js"></script>
+  <script src="main/js/pages/financesPage.js"></script>
+  <script src="main/js/pages/researchPage.js"></script>
+  <script src="main/js/pages/marketingPage.js"></script>
+  <script src="main/js/pages/statisticsPage.js"></script>
+  <script src="main/js/pages/settingsPage.js"></script>
 
   <!-- Electron integration script -->
-  <script src="js/electron-integration.js"></script>
+  <script src="main/js/electron-integration.js"></script>
 
   <!-- Global error handler with Electron logging support -->
   <script>
@@ -158,6 +159,55 @@
           });
         }
       }, 3000); // Wait 3 seconds after load to check
+    });
+  </script>
+
+  <!-- Fallback path finder for debugging -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Try to diagnose path issues
+      console.log("Checking for path issues...");
+      
+      // Log current directory information
+      console.log("Document location:", window.location.href);
+      console.log("Document path:", window.location.pathname);
+      
+      // Try to fetch a simple file to test paths
+      fetch('./js/debug.js')
+        .then(response => {
+          console.log("Successfully fetched debug.js:", response.status);
+        })
+        .catch(error => {
+          console.error("Failed to fetch debug.js:", error);
+          
+          // Try an alternative path
+          console.log("Trying alternative path...");
+          fetch('/js/debug.js')
+            .then(response => {
+              console.log("Alternative path successful:", response.status);
+            })
+            .catch(altError => {
+              console.error("Alternative path also failed:", altError);
+            });
+        });
+        
+      // Check if we're in an Electron environment
+      if (window.gameAPI) {
+        console.log("Electron environment detected");
+        
+        // Try to get app directory information through the preload API
+        if (window.gameAPI.getAppPath) {
+          window.gameAPI.getAppPath()
+            .then(appPath => {
+              console.log("App path from Electron:", appPath);
+            })
+            .catch(error => {
+              console.error("Failed to get app path:", error);
+            });
+        }
+      } else {
+        console.log("Not running in Electron environment");
+      }
     });
   </script>
 </body>
